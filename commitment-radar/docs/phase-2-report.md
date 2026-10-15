@@ -24,12 +24,13 @@ Backend hardening migration applied to the linked Supabase project. Artifacts ar
 - The organization-creation wrapper is not `SECURITY DEFINER`; anonymous execute is false and authenticated execute is true.
 - The fourteen required indexes exist.
 - The SQL catalog contract test executed successfully against the target project.
+- An authenticated-role smoke check returned `false` for membership/edit/manage checks on a nonexistent organization, confirming the private helpers are callable under the intended role and deny a nonmember.
 - All eight Commitment Radar tables remain at zero rows; no application data was inserted, updated, or deleted.
 - Performance advisor reports 22 unused-index INFO findings. This is expected for a schema with no workload and is not a reason to drop the indexes before usage patterns exist.
 
 ## Remaining release gates
 
-- Validate the reconstructed baseline migration in a separate disposable Supabase project before relying on clean-room provisioning. It is a catalog-based reconstruction, not a byte-for-byte recovery of the original source.
+- Validate the reconstructed baseline plus hardening migrations in a disposable PostgreSQL/Supabase environment. The workflow and behavioral test are committed, but a completed GitHub Actions run was not observable during this session. The baseline is a catalog-based reconstruction, not a byte-for-byte recovery of the original source.
 - Run authenticated integration tests with two users in separate organizations; verify cross-tenant reads and writes are denied.
 - Verify viewer/editor/admin/owner permissions with actual JWT-authenticated requests.
 - Add CI that runs SQL contract checks against an ephemeral database or disposable Supabase project.
