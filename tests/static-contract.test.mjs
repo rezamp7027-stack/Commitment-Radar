@@ -39,3 +39,13 @@ test('no privileged Supabase key pattern is embedded in the frontend', () => {
   assert.doesNotMatch(html, /sb_secret_[A-Za-z0-9_-]+/);
   assert.doesNotMatch(html, /service_role\s*[:=]/i);
 });
+
+test('commitment title validation matches the database minimum after trimming', () => {
+  assert.match(html, /id="commitTitle" minlength="2" maxlength="240"/);
+  assert.match(moduleSource, /if\(title\.length<2\).*Commitment title must contain at least 2 non-space characters/);
+});
+
+test('auth state listener is registered only after the Supabase client is created', () => {
+  assert.match(moduleSource, /client\.auth\.onAuthStateChange\(\(event,session\)/);
+  assert.doesNotMatch(moduleSource, /client\?\.auth\?\.onAuthStateChange/);
+});
