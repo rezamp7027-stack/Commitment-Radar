@@ -21,6 +21,8 @@ The harness is intentionally blocked from running against the production project
 | ROLE-01 | Owner, admin, and editor create a project in their own organization | Allowed |
 | ROLE-02 | Viewer creates a project | Denied |
 | RLS-04 | Owner A inserts a project under organization B | Denied |
+| RLS-05 | Owner A supplies owner B as `created_by` while inserting into organization A | Denied |
+| ROLE-05 | Admin attempts to change their own membership role to owner | Denied; role remains admin |
 | ROLE-03 | Owner and admin update organization settings | Allowed |
 | ROLE-04 | Editor and viewer update organization settings | Denied |
 | AUTH-02 | Anonymous role invokes organization-creation RPC | Denied |
