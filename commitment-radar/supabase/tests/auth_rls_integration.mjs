@@ -45,7 +45,7 @@ async function request(path, { key = anonKey, token, method = "GET", body, prefe
     "Content-Type": "application/json",
   };
   if (token) headers.Authorization = "Bearer " + token;
-  else if (key === anonKey) headers.Authorization = "Bearer " + anonKey;
+  else headers.Authorization = "Bearer " + key;
   if (prefer) headers.Prefer = prefer;
 
   const response = await fetch(baseUrl + path, {
