@@ -3,9 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
-const moduleMatch = html.match(/<script type="module">([\s\S]*?)<\/script>/);
-assert.ok(moduleMatch, 'index.html contains a module script');
-const moduleSource = moduleMatch[1].replace(
+const moduleSource = readFileSync(new URL('../app.js', import.meta.url), 'utf8').replace(
   /import\s+\{\s*createClient\s*\}\s+from\s+['"][^'"]+['"];\s*/,
   ''
 );
@@ -36,8 +34,8 @@ test('status and priority values match the inspected database constraints', () =
 });
 
 test('no privileged Supabase key pattern is embedded in the frontend', () => {
-  assert.doesNotMatch(html, /sb_secret_[A-Za-z0-9_-]+/);
-  assert.doesNotMatch(html, /service_role\s*[:=]/i);
+  assert.doesNotMatch(html + moduleSource, /sb_secret_[A-Za-z0-9_-]+/);
+  assert.doesNotMatch(html + moduleSource, /service_role\s*[:=]/i);
 });
 
 test('commitment title validation matches the database minimum after trimming', () => {
