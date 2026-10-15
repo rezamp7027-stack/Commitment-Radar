@@ -91,16 +91,16 @@ jobs:
           version: latest
 
       - name: Start isolated local Supabase stack
-        run: supabase start --workdir commitment-radar/supabase
+        run: supabase start --workdir commitment-radar
 
       - name: Apply project migrations to local database
-        run: supabase db reset --workdir commitment-radar/supabase
+        run: supabase db reset --workdir commitment-radar
 
       - name: Export local API credentials for the test process
         shell: bash
         run: |
           set -euo pipefail
-          supabase status --workdir commitment-radar/supabase --output env > /tmp/commitment-radar-supabase.env
+          supabase status --workdir commitment-radar --output env > /tmp/commitment-radar-supabase.env
           set -a
           source /tmp/commitment-radar-supabase.env
           set +a
@@ -115,7 +115,7 @@ jobs:
 
       - name: Stop isolated Supabase stack
         if: always()
-        run: supabase stop --workdir commitment-radar/supabase
+        run: supabase stop --workdir commitment-radar
 
   supabase-auth-integration:
     # Enable only after repository secrets point to a dedicated disposable Supabase project.
