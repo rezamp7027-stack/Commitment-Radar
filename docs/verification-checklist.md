@@ -20,8 +20,12 @@
 - Inline module script parsed successfully after stripping the browser import line and wrapping the module body in an async function.
 - Commitment status values were checked against the database CHECK constraint: `open`, `in_progress`, `blocked`, `done`, `cancelled`.
 - Priority values were checked against the database CHECK constraint: `low`, `normal`, `high`, `urgent`.
-- The browser code contains no service-role key.
-- The app's source was fetched back from GitHub after the last change.
+- The browser code contains no service-role or secret key pattern; the embedded key is a public publishable key.
+- Regression checks now cover the database's two-character trimmed title minimum and remove inert auth-listener registrations.
+- GitHub Actions static-contract run passed on commit `82d92ae68e5c07e56f79a8e6e64d9ec6f5c33b3b`: https://github.com/rezamp7027-stack/Commitment-Radar/actions/runs/38784101439
+- The database CI run passed both the PostgreSQL contract suite and isolated local Supabase Auth/PostgREST integration suite on database commit `7d2aa233fa04fabd69bb3080c0c1ac1fbd52c302`: https://github.com/rezamp7027-stack/Commitment-Radar/actions/runs/38755403462
+- Supabase security advisor returned no findings on 2026-10-15. Performance advisor reported 22 unused-index notices; these are informational on a low-usage/empty dataset and do not justify dropping indexes without workload evidence.
+- RLS policy definitions and helper functions were inspected. Local CI covers tenant isolation and viewer write denial; hosted two-account verification against the connected project remains NOT RUN.
 
 ## Required runtime tests — NOT RUN
 1. Configure the actual project URL and public key; confirm the client connects.
@@ -39,10 +43,10 @@
 
 ## Release blockers
 - No authenticated browser integration test has been run.
-- RLS policy expressions have been inspected but isolation has not been exercised with two real test users.
-- No deployment workflow was found during the limited root-file inspection; production hosting and CI remain unverified.
-- The app requires a public Supabase key to be configured in the browser before it can connect.
-- Figma and Canva deliverables remain deferred by request/account limits.
+- Hosted cross-organization isolation and role permissions against a dedicated disposable project remain unverified; local integration CI passed.
+- Static verification CI is confirmed green, but no hosting/deployment workflow or live deployment was verified.
+- The page is preconfigured with a public publishable key; browser configuration override remains optional. The public key is not a secret.
+- Figma inspection/update was blocked by the connected Starter plan's MCP tool-call limit. Canva handoff content was inspected and found to have drift from the implemented schema and UI; no Canva edits have been saved.
 
 ## Safe configuration
 Use only the Supabase project URL and public anon/publishable key. Never place a service-role or secret key in the repository, browser storage, HTML, or client configuration.
