@@ -34,8 +34,11 @@ test('HTML links the manifest and exposes install prompt only when supported', (
 
 test('service worker uses a versioned shell cache and removes stale app shell caches', () => {
   assert.match(sw, /const CACHE_PREFIX = 'commitment-radar-shell-'/);
-  assert.ok(sw.includes("const CACHE_NAME = `${CACHE_PREFIX}v1`"));
+  assert.ok(sw.includes("const CACHE_NAME = `${CACHE_PREFIX}v2`"));
   assert.match(sw, /name\.startsWith\(CACHE_PREFIX\).*name !== CACHE_NAME/);
+  assert.match(sw, /icon-192\.png/);
+  assert.match(sw, /icon-512\.png/);
+  assert.match(sw, /apple-touch-icon\.png/);
   assert.match(sw, /request\.mode === 'navigate'/);
   assert.match(sw, /cache\.match\(OFFLINE_URL\)/);
 });
