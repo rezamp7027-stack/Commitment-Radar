@@ -104,7 +104,7 @@ A zero-membership user needs a clear empty/no-access route. Do not fabricate a w
 - Preserve active filters when opening a record and returning to the list.
 - Zero results must distinguish “no commitments exist” from “filters match nothing.”
 - Use the exact enum values in Section 6 as UI labels; never send presentation-only labels as stored values.
-- Do not display a confidence percentage: current schema stores low/normal/high? No; the exact confidence enum is low/medium/high.
+- Do not display a confidence percentage: the exact confidence enum is low, medium, high.
 
 ### 5.3 Commitment detail
 
