@@ -83,18 +83,51 @@ test('browser workflows: commitments, projects, evidence, reviews, audit and wor
     await env.page.locator('#dueDate').fill('2026-11-01');
     await env.page.locator('#priority').selectOption('urgent');
     await env.page.locator('#projectId').selectOption({ label: 'Portfolio Redesign' });
+    await env.page.locator('#sourceExcerpt').fill('Quote from the acceptance document');
+    await env.page.locator('#sourceUrl').fill('https://example.test/acceptance');
     await env.page.getByRole('button', { name: 'Save commitment' }).click();
-    const commitment = env.page.locator('#items .item').filter({ hasText: 'Build pricing page' });
+    let commitment = env.page.locator('#items .item').filter({ hasText: 'Build pricing page' });
     await commitment.waitFor();
     assert.equal(await commitment.locator('.pill').filter({ hasText: 'urgent' }).count(), 1);
     assert.equal(await env.page.locator('#activeMetric').innerText(), '2');
 
-    await commitment.getByRole('checkbox', { name: 'Mark Build pricing page completed' }).click();
+    await env.page.locator('#commitSearch').fill('Portfolio Redesign');
+    assert.equal(await env.page.locator('#items .item').count(), 1);
+    await env.page.locator('#commitSearch').fill('');
+    commitment = env.page.locator('#items .item').filter({ hasText: 'Build pricing page' });
+
+    await commitment.getByRole('button', { name: 'Edit Build pricing page' }).click();
+    await env.page.locator('#commitTitle').fill('Build pricing page v2');
+    await env.page.locator('#commitState').selectOption('in_progress');
+    await env.page.locator('#sourceExcerpt').fill('Updated acceptance excerpt');
+    await env.page.locator('#sourceUrl').fill('https://example.test/pricing-v2');
+    await env.page.getByRole('button', { name: 'Save changes' }).click();
+    commitment = env.page.locator('#items .item').filter({ hasText: 'Build pricing page v2' });
+    await commitment.waitFor();
+    await commitment.getByText('In progress', { exact: true }).waitFor();
+    assert.equal(await commitment.locator('a.module-link').getAttribute('href'), 'https://example.test/pricing-v2');
+
+    await env.page.locator('[data-view="dependencies"]').click();
+    await env.page.locator('#dependencyCommitmentId').selectOption({ label: 'Build pricing page v2' });
+    await env.page.locator('#dependsOnCommitmentId').selectOption({ label: 'Existing commitment' });
+    await env.page.getByRole('button', { name: 'Add dependency' }).click();
+    const dependency = env.page.locator('#dependenciesList .module-row').filter({ hasText: 'Build pricing page v2 depends on Existing commitment' });
+    await dependency.waitFor();
+    await env.page.locator('#dependencyCommitmentId').selectOption({ label: 'Existing commitment' });
+    await env.page.locator('#dependsOnCommitmentId').selectOption({ label: 'Build pricing page v2' });
+    await env.page.getByRole('button', { name: 'Add dependency' }).click();
+    await env.page.locator('#dependencyStatus').getByText(/circular chain/i).waitFor();
+    await dependency.getByRole('button', { name: 'Remove dependency' }).click();
+    await dependency.waitFor({ state: 'detached' });
+
+    await env.page.locator('[data-view="overview"]').click();
+    commitment = env.page.locator('#items .item').filter({ hasText: 'Build pricing page v2' });
+    await commitment.getByRole('checkbox', { name: 'Mark Build pricing page v2 completed' }).click();
     await commitment.getByText('Completed', { exact: true }).waitFor();
     assert.equal(await env.page.locator('#doneMetric').innerText(), '1');
 
     await env.page.locator('[data-view="evidence"]').click();
-    await env.page.locator('#evidenceCommitmentId').selectOption({ label: 'Build pricing page' });
+    await env.page.locator('#evidenceCommitmentId').selectOption({ label: 'Build pricing page v2' });
     await env.page.locator('#evidenceLabel').fill('Pricing acceptance criteria');
     await env.page.locator('#evidenceUrl').fill('https://example.test/pricing-acceptance');
     await env.page.locator('#evidenceNote').fill('Verified copy and pricing tiers');
@@ -105,10 +138,10 @@ test('browser workflows: commitments, projects, evidence, reviews, audit and wor
     await evidence.waitFor({ state: 'detached' });
 
     await env.page.locator('[data-view="reviews"]').click();
-    await env.page.locator('#reviewCommitmentId').selectOption({ label: 'Build pricing page' });
+    await env.page.locator('#reviewCommitmentId').selectOption({ label: 'Build pricing page v2' });
     await env.page.getByRole('button', { name: 'Request review' }).click();
     const reviews = env.page.locator('#reviewsList');
-    await reviews.getByText('Build pricing page').waitFor();
+    await reviews.getByText('Build pricing page v2').waitFor();
     const existingReview = reviews.locator('.module-row').filter({ hasText: 'Existing commitment' });
     await existingReview.getByRole('button', { name: 'Approve' }).click();
     await existingReview.getByText('Status · approved').waitFor();
