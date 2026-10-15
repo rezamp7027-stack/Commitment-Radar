@@ -44,7 +44,7 @@ REVOKE ALL ON FUNCTION private.cr_prevent_dependency_cycle() FROM PUBLIC, anon, 
 
 DROP TRIGGER IF EXISTS cr_dependencies_prevent_cycle ON public.cr_dependencies;
 CREATE TRIGGER cr_dependencies_prevent_cycle
-BEFORE INSERT OR UPDATE OF organization_id, commitment_id, depends_on_commitment_id
+BEFORE INSERT OR UPDATE
 ON public.cr_dependencies
 FOR EACH ROW
 EXECUTE FUNCTION private.cr_prevent_dependency_cycle();
