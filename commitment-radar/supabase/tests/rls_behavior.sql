@@ -66,6 +66,8 @@ RETURNING id AS dependency_a \gset
 INSERT INTO public.cr_commitments (organization_id, title, created_by)
 VALUES (current_setting('test.cr_org_a')::uuid, 'Dependency cycle node B', auth.uid())
 RETURNING id AS dependency_b \gset
+SELECT set_config('test.cr_dependency_a', :'dependency_a', true);
+SELECT set_config('test.cr_dependency_b', :'dependency_b', true);
 
 INSERT INTO public.cr_dependencies (organization_id, commitment_id, depends_on_commitment_id, created_by)
 VALUES (current_setting('test.cr_org_a')::uuid, :'dependency_a'::uuid, :'dependency_b'::uuid, auth.uid());
@@ -75,7 +77,8 @@ BEGIN
   BEGIN
     INSERT INTO public.cr_dependencies (organization_id, commitment_id, depends_on_commitment_id, created_by)
     VALUES (current_setting('test.cr_org_a')::uuid,
-            :'dependency_b'::uuid, :'dependency_a'::uuid, auth.uid());
+            current_setting('test.cr_dependency_b')::uuid,
+            current_setting('test.cr_dependency_a')::uuid, auth.uid());
     RAISE EXCEPTION 'Database did not reject a cyclic dependency chain';
   EXCEPTION
     WHEN check_violation THEN
