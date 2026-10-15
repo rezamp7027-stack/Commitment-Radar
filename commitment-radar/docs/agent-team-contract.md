@@ -47,19 +47,19 @@ These are proposed roles for a supervised workflow, not evidence that four auton
 | Fourteen FK supporting indexes exist | Pass | SQL catalog contract passed |
 | Security advisor | Zero findings | Observed after migration |
 | Unindexed FK advisor | Zero findings | Observed after migration |
-| Real user A cannot read organization B | Pass (local Supabase) | Run `38740987305`: real Auth JWT + PostgREST integration test passed |
-| Viewer cannot mutate records | Pass (local Supabase) | Run `38740987305`: viewer project creation denied |
-| Owner can create organization and is owner membership | Pass (local Supabase) | Run `38740987305`: authenticated RPC and owner membership passed |
+| Real user A cannot read organization B | Pass (local Supabase) | Run `38741601962`: real Auth JWT + PostgREST integration test passed |
+| Viewer cannot mutate records | Pass (local Supabase) | Run `38741601962`: viewer project creation denied |
+| Owner can create organization and is owner membership | Pass (local Supabase) | Run `38741601962`: authenticated RPC and owner membership passed |
 | Reconstructed baseline + hardening migration in clean-room PostgreSQL 16 | Confirmed | GitHub Actions run `38732428069` passed both migrations and both SQL test scripts; hosted Supabase provisioning remains unverified |
 
 ## Phase 2 Auth integration execution boundary
 
 - The real Auth/PostgREST harness is `supabase/tests/auth_rls_integration.mjs`.
 - It creates unique temporary users and records only in a dedicated disposable Supabase project; production project ref `htfrixfcirgrhlmwtkjs` is explicitly refused by CI.
-- The default local Supabase Auth/PostgREST job passed 11/11 scenarios in GitHub Actions run `38740987305`.
+- The default local Supabase Auth/PostgREST job passed 11/11 scenarios in GitHub Actions run `38741601962`.
 - The additional hosted job is gated by repository variable `ENABLE_SUPABASE_AUTH_INTEGRATION=true` and secrets `SUPABASE_TEST_URL`, `SUPABASE_TEST_ANON_KEY`, and `SUPABASE_TEST_SERVICE_ROLE_KEY`.
 - The regular CI run checks JavaScript syntax and SQL contract behavior; the local Auth integration job independently checks real JWT propagation and PostgREST/RLS behavior.
-- Latest full CI: run `38740987305` passed; optional hosted parity job was skipped pending disposable-project configuration.
+- Latest full CI: run `38741601962` passed; optional hosted parity job was skipped pending disposable-project configuration.
 
 ## Related Codelit resource
 

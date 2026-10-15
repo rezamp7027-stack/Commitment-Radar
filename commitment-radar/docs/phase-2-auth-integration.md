@@ -1,6 +1,6 @@
 # Commitment Radar — Phase 2 Auth/RLS Integration
 
-**Status:** PASS — GitHub Actions run `38740987305` passed the local real Auth/PostgREST integration suite, 11/11 scenarios. An additional hosted disposable-project run remains optional.  
+**Status:** PASS — GitHub Actions run `38741601962` passed the local real Auth/PostgREST integration suite, 11/11 scenarios. An additional hosted disposable-project run remains optional.  
 **Target repository:** `rezamp7027-stack/Commitment-Radar`, default branch `main`  
 **Production Supabase:** `htfrixfcirgrhlmwtkjs` — not a test target.
 
@@ -68,4 +68,4 @@ The script generates unique temporary user emails/passwords at runtime and does 
 
 ## Limitations and acceptance
 
-Phase 2's local real-Auth acceptance gate passed in run `38740987305`: it exercises actual Auth-issued JWTs and PostgREST in the Supabase stack after applying the committed migrations. A hosted disposable-project run provides additional deployment-parity evidence but is separate. The PostgreSQL contract harness alone proves only database-policy behavior with simulated claims; it does not prove Auth issuance or JWT propagation. This test is an authorization regression suite, not a penetration test.
+Phase 2's local real-Auth acceptance gate passed in run `38741601962`: it exercises actual Auth-issued JWTs and PostgREST in the Supabase stack after applying the committed migrations. A hosted disposable-project run provides additional deployment-parity evidence but is separate. The PostgreSQL contract harness alone proves only database-policy behavior with simulated claims; it does not prove Auth issuance or JWT propagation. This test is an authorization regression suite, not a penetration test.
