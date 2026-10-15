@@ -57,6 +57,33 @@ BEGIN
 END;
 $assert_rpc$;
 
+-- Owners can create normal dependencies, but the database must reject a cycle
+-- even if a client bypasses the frontend validation.
+SELECT set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000001', true);
+INSERT INTO public.cr_commitments (organization_id, title, created_by)
+VALUES (current_setting('test.cr_org_a')::uuid, 'Dependency cycle node A', auth.uid())
+RETURNING id AS dependency_a \gset
+INSERT INTO public.cr_commitments (organization_id, title, created_by)
+VALUES (current_setting('test.cr_org_a')::uuid, 'Dependency cycle node B', auth.uid())
+RETURNING id AS dependency_b \gset
+
+INSERT INTO public.cr_dependencies (organization_id, commitment_id, depends_on_commitment_id, created_by)
+VALUES (current_setting('test.cr_org_a')::uuid, :'dependency_a'::uuid, :'dependency_b'::uuid, auth.uid());
+
+DO $assert_dependency_cycle_rejected$
+BEGIN
+  BEGIN
+    INSERT INTO public.cr_dependencies (organization_id, commitment_id, depends_on_commitment_id, created_by)
+    VALUES (current_setting('test.cr_org_a')::uuid,
+            :'dependency_b'::uuid, :'dependency_a'::uuid, auth.uid());
+    RAISE EXCEPTION 'Database did not reject a cyclic dependency chain';
+  EXCEPTION
+    WHEN check_violation THEN
+      NULL;
+  END;
+END;
+$assert_dependency_cycle_rejected$;
+
 SELECT set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000003', true);
 
 DO $assert_viewer_cannot_write$
