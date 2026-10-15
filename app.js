@@ -2,7 +2,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const $=id=>document.getElementById(id);
 const CONFIG_KEY='commitment-radar-supabase-public-config-v1';
 const DEFAULT_CONFIG={url:'https://htfrixfcirgrhlmwtkjs.supabase.co',key:'sb_publishable_pgnE6MaOYJCSvNiSt2h7SA_SN57UyK6'};
-let client=null,user=null,orgs=[],orgId=null,commitments=[],projects=[],evidenceItems=[],reviews=[],auditEvents=[],filter='all',authMode='signin',busy=false;
+let client=null,user=null,orgs=[],orgId=null,commitments=[],projects=[],evidenceItems=[],reviews=[],auditEvents=[],dependencies=[],filter='all',editingCommitmentId=null,authMode='signin',busy=false;
 const show=(id,msg,kind='')=>{const el=$(id);el.textContent=msg;el.className='status'+(kind?' '+kind:'');el.classList.remove('hidden')};
 const hide=id=>$(id).classList.add('hidden');
 const errText=e=>{const m=e?.message||'Unexpected error';return m.length>240?m.slice(0,237)+'…':m};
@@ -10,7 +10,7 @@ function setTag(text){$('connectionTag').textContent=text}
 
 function canEdit(){return ['owner','admin','editor'].includes(orgs.find(o=>o.id===orgId)?.role)}
 function fillCommitmentSelects(){
-  const options=[['projectId','No project',projects.filter(p=>p.status==='active').map(p=>[p.id,p.name])],['evidenceCommitmentId','Select a commitment',commitments.map(c=>[c.id,c.title])],['reviewCommitmentId','Select a commitment',commitments.filter(c=>!isCancelled(c)).map(c=>[c.id,c.title])]];
+  const options=[['projectId','No project',projects.filter(p=>p.status==='active').map(p=>[p.id,p.name])],['evidenceCommitmentId','Select a commitment',commitments.map(c=>[c.id,c.title])],['reviewCommitmentId','Select a commitment',commitments.filter(c=>!isCancelled(c)).map(c=>[c.id,c.title])],['dependencyCommitmentId','Choose dependent commitment',commitments.filter(c=>!isCancelled(c)).map(c=>[c.id,c.title])],['dependsOnCommitmentId','Choose prerequisite',commitments.filter(c=>!isCancelled(c)).map(c=>[c.id,c.title])]];
   for(const [id,placeholder,items] of options){const el=$(id);if(!el)continue;const previous=el.value;el.replaceChildren();const blank=document.createElement('option');blank.value='';blank.textContent=placeholder;el.appendChild(blank);for(const [value,label] of items){const opt=document.createElement('option');opt.value=value;opt.textContent=label;el.appendChild(opt)}if(items.some(item=>item[0]===previous))el.value=previous}
 }
 function showView(view){
@@ -20,6 +20,7 @@ function showView(view){
   if(view==='evidence')loadEvidence();
   if(view==='reviews')loadReviews();
   if(view==='audit')loadAudit();
+  if(view==='dependencies')loadDependencies();
 }
 
 function cfg(){try{return JSON.parse(localStorage.getItem(CONFIG_KEY)||'null')||DEFAULT_CONFIG}catch{return DEFAULT_CONFIG}}
@@ -30,7 +31,7 @@ function setBusy(v){busy=v;document.querySelectorAll('button').forEach(b=>{if(![
 async function init(){
  const c=cfg();
  if(!validCfg(c)){setTag('SUPABASE · NOT CONFIGURED');$('settingsPanel').classList.add('open');$('projectUrl').value=c?.url||'https://htfrixfcirgrhlmwtkjs.supabase.co';$('anonKey').value=c?.key||'';return}
- try{client=createClient(c.url,c.key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});client.auth.onAuthStateChange((event,session)=>{if(event==='SIGNED_OUT'){user=null;orgs=[];commitments=[];projects=[];evidenceItems=[];reviews=[];auditEvents=[];$('workspacePanel').classList.add('hidden');showOnlyAuth()}});setTag('SUPABASE · CONNECTED');const {data,error}=await client.auth.getSession();if(error)throw error;if(data.session){user=data.session.user;await enterApp()}else{showOnlyAuth()}}catch(e){client=null;setTag('CONNECTION · ERROR');$('settingsPanel').classList.add('open');show('settingsStatus','Could not connect: '+errText(e),'error')}
+ try{client=createClient(c.url,c.key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});client.auth.onAuthStateChange((event,session)=>{if(event==='SIGNED_OUT'){user=null;orgs=[];commitments=[];projects=[];evidenceItems=[];reviews=[];auditEvents=[];dependencies=[];$('workspacePanel').classList.add('hidden');showOnlyAuth()}});setTag('SUPABASE · CONNECTED');const {data,error}=await client.auth.getSession();if(error)throw error;if(data.session){user=data.session.user;await enterApp()}else{showOnlyAuth()}}catch(e){client=null;setTag('CONNECTION · ERROR');$('settingsPanel').classList.add('open');show('settingsStatus','Could not connect: '+errText(e),'error')}
 }
 $('settingsBtn').addEventListener('click',()=>$('settingsPanel').classList.toggle('open'));
 $('closeSettings').addEventListener('click',()=>$('settingsPanel').classList.remove('open'));
@@ -39,12 +40,12 @@ $('forgetConfig').addEventListener('click',async()=>{localStorage.removeItem(CON
 $('toggleAuthMode').addEventListener('click',()=>{authMode=authMode==='signin'?'signup':'signin';showOnlyAuth();hide('authStatus')});
 $('authForm').addEventListener('submit',async e=>{e.preventDefault();if(!client)return;setBusy(true);hide('authStatus');try{const email=$('email').value.trim(),password=$('password').value;if(authMode==='signin'){const {data,error}=await client.auth.signInWithPassword({email,password});if(error)throw error;user=data.user;await enterApp()}else{const {data,error}=await client.auth.signUp({email,password});if(error)throw error;if(data.session){user=data.user;await enterApp()}else{show('authStatus','Account created. Check your email to confirm it, then return here to sign in.','ok');authMode='signin';$('authTitle').textContent='Sign in to Commitment Radar';$('authSubmit').textContent='Sign in';$('toggleAuthMode').textContent='Create account'}}}catch(ex){show('authStatus',errText(ex),'error')}finally{setBusy(false)}});
 async function enterApp(){if(!user||!client)return;$('authPanel').classList.add('hidden');$('workspacePanel').classList.remove('hidden');$('userLabel').textContent=user.email||'Signed in';hide('globalStatus');await loadOrganizations()}
-async function loadOrganizations(){setBusy(true);try{const {data,error}=await client.from('cr_memberships').select('organization_id,role,cr_organizations(id,name)').eq('user_id',user.id);if(error)throw error;orgs=(data||[]).map(m=>({id:m.organization_id,name:m.cr_organizations?.name||'Workspace',role:m.role}));const sel=$('workspaceSelect');sel.replaceChildren();for(const o of orgs){const op=document.createElement('option');op.value=o.id;op.textContent=o.name+' · '+o.role;sel.appendChild(op)}if(!orgs.length){orgId=null;commitments=[];projects=[];evidenceItems=[];reviews=[];auditEvents=[];fillCommitmentSelects();render();renderProjects();renderEvidence();renderReviews();renderAudit();$('items').innerHTML='<div class="empty">Create your first workspace to begin.</div>';show('globalStatus','No workspace is associated with this account yet. Create one below.');$('workspaceCreate').classList.add('open')}else{orgId=orgs.some(o=>o.id===orgId)?orgId:orgs[0].id;sel.value=orgId;hide('globalStatus');await loadProjects();await loadCommitments();await loadEvidence();await loadReviews();await loadAudit()}}catch(e){show('globalStatus','Could not load workspaces: '+errText(e),'error');$('items').innerHTML='<div class="empty">Workspace data could not be loaded. Check your connection and RLS policies.</div>'}finally{setBusy(false)}}
-$('workspaceSelect').addEventListener('change',async()=>{orgId=$('workspaceSelect').value;await loadProjects();await loadCommitments();await loadEvidence();await loadReviews();await loadAudit()});
+async function loadOrganizations(){setBusy(true);try{const {data,error}=await client.from('cr_memberships').select('organization_id,role,cr_organizations(id,name)').eq('user_id',user.id);if(error)throw error;orgs=(data||[]).map(m=>({id:m.organization_id,name:m.cr_organizations?.name||'Workspace',role:m.role}));const sel=$('workspaceSelect');sel.replaceChildren();for(const o of orgs){const op=document.createElement('option');op.value=o.id;op.textContent=o.name+' · '+o.role;sel.appendChild(op)}if(!orgs.length){orgId=null;commitments=[];projects=[];evidenceItems=[];reviews=[];auditEvents=[];dependencies=[];fillCommitmentSelects();render();renderProjects();renderEvidence();renderReviews();renderAudit();renderDependencies();$('items').innerHTML='<div class="empty">Create your first workspace to begin.</div>';show('globalStatus','No workspace is associated with this account yet. Create one below.');$('workspaceCreate').classList.add('open')}else{orgId=orgs.some(o=>o.id===orgId)?orgId:orgs[0].id;sel.value=orgId;hide('globalStatus');await loadProjects();await loadCommitments();await loadEvidence();await loadReviews();await loadAudit();await loadDependencies()}}catch(e){show('globalStatus','Could not load workspaces: '+errText(e),'error');$('items').innerHTML='<div class="empty">Workspace data could not be loaded. Check your connection and RLS policies.</div>'}finally{setBusy(false)}}
+$('workspaceSelect').addEventListener('change',async()=>{orgId=$('workspaceSelect').value;await loadProjects();await loadCommitments();await loadEvidence();await loadReviews();await loadAudit();await loadDependencies()});
 $('newWorkspaceBtn').addEventListener('click',()=>$('workspaceCreate').classList.toggle('open'));
 $('cancelWorkspace').addEventListener('click',()=>$('workspaceCreate').classList.remove('open'));
-$('workspaceForm').addEventListener('submit',async e=>{e.preventDefault();const name=$('workspaceName').value.trim();if(name.length<2){show('workspaceStatus','Name must contain at least 2 characters.','error');return}setBusy(true);try{const {data,error}=await client.rpc('cr_create_organization',{p_name:name});if(error)throw error;$('workspaceName').value='';$('workspaceCreate').classList.remove('open');show('globalStatus','Workspace created.','ok');await loadOrganizations();if(data){orgId=data;$('workspaceSelect').value=data;await loadCommitments()}}catch(ex){show('workspaceStatus','Could not create workspace: '+errText(ex),'error')}finally{setBusy(false)}});
-async function loadCommitments(){if(!orgId){commitments=[];render();return}setBusy(true);try{const {data,error}=await client.from('cr_commitments').select('id,organization_id,project_id,title,details,counterparty,owner_name,due_date,status,priority,confidence,source_type,source_excerpt,source_url,created_by,created_at,updated_at,completed_at').eq('organization_id',orgId).order('due_date',{ascending:true,nullsFirst:false}).order('created_at',{ascending:false});if(error)throw error;commitments=data||[];fillCommitmentSelects();render();hide('dataStatus')}catch(e){show('dataStatus','Could not load commitments: '+errText(e),'error');$('items').innerHTML='<div class="empty">Could not load records. Check the database permissions and membership.</div>'}finally{setBusy(false)}}
+$('workspaceForm').addEventListener('submit',async e=>{e.preventDefault();const name=$('workspaceName').value.trim();if(name.length<2){show('workspaceStatus','Name must contain at least 2 characters.','error');return}setBusy(true);try{const {data,error}=await client.rpc('cr_create_organization',{p_name:name});if(error)throw error;$('workspaceName').value='';$('workspaceCreate').classList.remove('open');show('globalStatus','Workspace created.','ok');await loadOrganizations();if(data){orgId=data;$('workspaceSelect').value=data;await loadProjects();await loadCommitments();await loadEvidence();await loadReviews();await loadAudit();await loadDependencies()}}catch(ex){show('workspaceStatus','Could not create workspace: '+errText(ex),'error')}finally{setBusy(false)}});
+async function loadCommitments(){if(!orgId){commitments=[];fillCommitmentSelects();render();return}setBusy(true);try{const {data,error}=await client.from('cr_commitments').select('id,organization_id,project_id,title,details,counterparty,owner_name,due_date,status,priority,confidence,source_type,source_excerpt,source_url,created_by,created_at,updated_at,completed_at').eq('organization_id',orgId).order('due_date',{ascending:true,nullsFirst:false}).order('created_at',{ascending:false});if(error)throw error;commitments=data||[];fillCommitmentSelects();render();hide('dataStatus')}catch(e){show('dataStatus','Could not load commitments: '+errText(e),'error');$('items').innerHTML='<div class="empty">Could not load records. Check the database permissions and membership.</div>'}finally{setBusy(false)}}
 function today(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
 function isDone(x){return x.status==='completed'||x.status==='done'}
 function isCancelled(x){return x.status==='cancelled'}
@@ -52,7 +53,83 @@ function isOpen(x){return !isDone(x)&&!isCancelled(x)}
 function isOverdue(x){return isOpen(x)&&x.due_date&&x.due_date<today()}
 function fmt(d){if(!d)return'No due date';return new Date(d+'T12:00:00').toLocaleDateString(undefined,{month:'short',day:'numeric',year:new Date(d+'T12:00:00').getFullYear()===new Date().getFullYear()?undefined:'numeric'})}
 function safeEl(tag,cls,txt){const n=document.createElement(tag);if(cls)n.className=cls;if(txt!==undefined)n.textContent=txt;return n}
-function render(){const active=commitments.filter(isOpen).length,done=commitments.filter(isDone).length,late=commitments.filter(isOverdue).length;$('activeMetric').textContent=active;$('doneMetric').textContent=done;$('attentionMetric').textContent=late;const rows=commitments.filter(x=>filter==='all'||(filter==='active'&&isOpen(x))||(filter==='done'&&isDone(x))||(filter==='attention'&&isOverdue(x)));$('countLabel').textContent=rows.length+' shown';const root=$('items');root.replaceChildren();if(!rows.length){root.appendChild(safeEl('div','empty',commitments.length?'Nothing in this view right now.':'No commitments yet. Add your first commitment.'));return}for(const x of rows){const item=safeEl('article','item'),cb=safeEl('input','check');cb.type='checkbox';cb.checked=isDone(x);cb.disabled=isCancelled(x);cb.setAttribute('aria-label',isCancelled(x)?'Cancelled commitment: '+x.title:'Mark '+x.title+' completed');cb.addEventListener('change',()=>updateStatus(x,cb.checked));const main=safeEl('div','item-main'),title=safeEl('div','item-title'+(isDone(x)?' done':''),x.title),meta=safeEl('div','meta');if(x.owner_name)meta.appendChild(safeEl('span','pill','Owner · '+x.owner_name));if(x.counterparty)meta.appendChild(safeEl('span','pill','For · '+x.counterparty));if(x.project_id){const project=projects.find(p=>p.id===x.project_id);if(project)meta.appendChild(safeEl('span','pill','Project · '+project.name))}meta.appendChild(safeEl('span','pill',x.priority||'normal'));meta.appendChild(safeEl('span','pill'+(isOverdue(x)?' overdue':(!isDone(x)&&x.due_date===today()?' today':'')),isDone(x)?'Completed':(isCancelled(x)?'Cancelled':(isOverdue(x)?'Overdue · ':'Due · ')+fmt(x.due_date))));if(x.details)main.appendChild(title),main.appendChild(safeEl('div','hint',x.details.slice(0,180)));else main.appendChild(title);main.appendChild(meta);const del=safeEl('button','delete','×');del.type='button';del.setAttribute('aria-label','Delete '+x.title);del.addEventListener('click',()=>deleteCommitment(x));item.append(cb,main,del);root.appendChild(item)}}
+function render(){
+  const active=commitments.filter(isOpen).length;
+  const done=commitments.filter(isDone).length;
+  const late=commitments.filter(isOverdue).length;
+  $('activeMetric').textContent=active;
+  $('doneMetric').textContent=done;
+  $('attentionMetric').textContent=late;
+
+  const query=($('commitSearch')?.value||'').trim().toLocaleLowerCase();
+  let rows=commitments.filter(x=>{
+    if(filter==='active'&&!isOpen(x))return false;
+    if(filter==='in_progress'&&x.status!=='in_progress')return false;
+    if(filter==='blocked'&&x.status!=='blocked')return false;
+    if(filter==='done'&&!isDone(x))return false;
+    if(filter==='cancelled'&&!isCancelled(x))return false;
+    if(filter==='attention'&&!isOverdue(x))return false;
+    if(query){
+      const project=projects.find(p=>p.id===x.project_id)?.name||'';
+      const haystack=[x.title,x.details,x.owner_name,x.counterparty,x.source_excerpt,x.source_url,project].join(' ').toLocaleLowerCase();
+      if(!haystack.includes(query))return false;
+    }
+    return true;
+  });
+
+  const sort=$('commitSort')?.value||'due';
+  const priorityRank={urgent:4,high:3,normal:2,low:1};
+  rows.sort((a,b)=>{
+    if(sort==='title')return String(a.title||'').localeCompare(String(b.title||''));
+    if(sort==='created')return String(b.created_at||'').localeCompare(String(a.created_at||''));
+    if(sort==='priority'){
+      const rank=(priorityRank[b.priority]||0)-(priorityRank[a.priority]||0);
+      return rank||String(a.due_date||'9999-12-31').localeCompare(String(b.due_date||'9999-12-31'));
+    }
+    const due=String(a.due_date||'9999-12-31').localeCompare(String(b.due_date||'9999-12-31'));
+    return due||String(b.created_at||'').localeCompare(String(a.created_at||''));
+  });
+
+  $('countLabel').textContent=rows.length+' shown';
+  const root=$('items');
+  root.replaceChildren();
+  if(!rows.length){
+    root.appendChild(safeEl('div','empty',commitments.length?(query?'No matching commitments.':'Nothing in this view right now.'):'No commitments yet. Add your first commitment.'));
+    return;
+  }
+  const statusLabels={open:'Open',in_progress:'In progress',blocked:'Blocked',done:'Completed',completed:'Completed',cancelled:'Cancelled'};
+  for(const x of rows){
+    const item=safeEl('article','item');
+    const cb=safeEl('input','check');
+    cb.type='checkbox';cb.checked=isDone(x);cb.disabled=isCancelled(x);
+    cb.setAttribute('aria-label',isCancelled(x)?'Cancelled commitment: '+x.title:'Mark '+x.title+' completed');
+    cb.addEventListener('change',()=>updateStatus(x,cb.checked));
+
+    const main=safeEl('div','item-main');
+    const title=safeEl('div','item-title'+(isDone(x)?' done':''),x.title);
+    if(x.details)main.append(title,safeEl('div','hint',x.details.slice(0,180)));
+    else main.appendChild(title);
+    if(x.source_excerpt)main.appendChild(safeEl('div','hint','Source · '+x.source_excerpt.slice(0,140)));
+
+    const meta=safeEl('div','meta');
+    if(x.owner_name)meta.appendChild(safeEl('span','pill','Owner · '+x.owner_name));
+    if(x.counterparty)meta.appendChild(safeEl('span','pill','For · '+x.counterparty));
+    if(x.project_id){const project=projects.find(p=>p.id===x.project_id);if(project)meta.appendChild(safeEl('span','pill','Project · '+project.name))}
+    meta.appendChild(safeEl('span','pill','Priority · '+(x.priority||'normal')));
+    meta.appendChild(safeEl('span','pill status-pill status-'+(x.status||'open'),statusLabels[x.status]||x.status||'Open'));
+    meta.appendChild(safeEl('span','pill'+(isOverdue(x)?' overdue':(!isDone(x)&&!isCancelled(x)&&x.due_date===today()?' today':'')),isOverdue(x)?'Overdue · '+fmt(x.due_date):'Due · '+fmt(x.due_date)));
+    main.appendChild(meta);
+
+    const actions=safeEl('div','item-actions');
+    const edit=safeEl('button','secondary','Edit');
+    edit.type='button';edit.setAttribute('aria-label','Edit '+x.title);edit.addEventListener('click',()=>editCommitment(x));
+    const del=safeEl('button','delete','×');
+    del.type='button';del.setAttribute('aria-label','Delete '+x.title);del.addEventListener('click',()=>deleteCommitment(x));
+    actions.append(edit,del);
+    item.append(cb,main,actions);
+    root.appendChild(item);
+  }
+}
 
 async function loadProjects(){
   if(!client||!orgId){projects=[];fillCommitmentSelects();renderProjects();return}
@@ -134,14 +211,168 @@ function renderAudit(){
 document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>showView(button.dataset.view)));
 $('refreshAudit').addEventListener('click',loadAudit);
 
-async function updateStatus(x,done){setBusy(true);try{const status=done?'done':'open';const patch={status,completed_at:done?new Date().toISOString():null};const {error}=await client.from('cr_commitments').update(patch).eq('id',x.id).eq('organization_id',orgId);if(error)throw error;await loadCommitments()}catch(e){show('dataStatus','Could not update commitment: '+errText(e),'error');await loadCommitments()}finally{setBusy(false)}}
+
+function dependencyCycle(child,parent){
+  const graph=new Map();
+  for(const d of dependencies){
+    if(!graph.has(d.commitment_id))graph.set(d.commitment_id,[]);
+    graph.get(d.commitment_id).push(d.depends_on_commitment_id);
+  }
+  const stack=[parent],seen=new Set();
+  while(stack.length){
+    const current=stack.pop();
+    if(current===child)return true;
+    if(seen.has(current))continue;
+    seen.add(current);
+    stack.push(...(graph.get(current)||[]));
+  }
+  return false;
+}
+async function loadDependencies(){
+  if(!client||!orgId){dependencies=[];renderDependencies();return}
+  try{
+    const {data,error}=await client.from('cr_dependencies').select('id,organization_id,commitment_id,depends_on_commitment_id,created_by,created_at').eq('organization_id',orgId).order('created_at',{ascending:false});
+    if(error)throw error;
+    dependencies=data||[];
+    renderDependencies();
+  }catch(e){
+    show('dependencyStatus','Could not load dependencies: '+errText(e),'error');
+    $('dependenciesList').replaceChildren(safeEl('div','empty','Dependencies could not be loaded.'));
+  }
+}
+function renderDependencies(){
+  const root=$('dependenciesList');root.replaceChildren();
+  if(!dependencies.length){root.appendChild(safeEl('div','empty','No dependencies recorded for this workspace yet.'));return}
+  for(const dependency of dependencies){
+    const row=safeEl('article','module-row'),body=safeEl('div','module-row-main');
+    const child=commitments.find(c=>c.id===dependency.commitment_id);
+    const prerequisite=commitments.find(c=>c.id===dependency.depends_on_commitment_id);
+    body.appendChild(safeEl('strong','module-title',(child?.title||'Unavailable commitment')+' depends on '+(prerequisite?.title||'Unavailable prerequisite')));
+    body.appendChild(safeEl('div','hint','Both commitments belong to the current workspace.'));
+    row.appendChild(body);
+    if(canEdit()){
+      const remove=safeEl('button','secondary','Remove dependency');
+      remove.type='button';
+      remove.addEventListener('click',()=>deleteDependency(dependency));
+      row.appendChild(remove);
+    }
+    root.appendChild(row);
+  }
+}
+$('dependencyForm').addEventListener('submit',async e=>{
+  e.preventDefault();
+  if(!orgId||!canEdit()){show('dependencyStatus','You need an editor or higher role to manage dependencies.','error');return}
+  const child=$('dependencyCommitmentId').value,parent=$('dependsOnCommitmentId').value;
+  if(!child||!parent){show('dependencyStatus','Choose both commitments.','error');return}
+  if(child===parent){show('dependencyStatus','A commitment cannot depend on itself.','error');return}
+  if(dependencies.some(d=>d.commitment_id===child&&d.depends_on_commitment_id===parent)){show('dependencyStatus','That dependency already exists.','error');return}
+  if(dependencyCycle(child,parent)){show('dependencyStatus','This dependency would create a circular chain. Choose a different prerequisite.','error');return}
+  try{
+    const {error}=await client.from('cr_dependencies').insert({organization_id:orgId,commitment_id:child,depends_on_commitment_id:parent,created_by:user.id});
+    if(error)throw error;
+    $('dependencyForm').reset();
+    hide('dependencyStatus');
+    await loadDependencies();
+  }catch(ex){show('dependencyStatus','Could not add dependency: '+errText(ex),'error')}
+});
+async function deleteDependency(dependency){
+  if(!confirm('Remove this dependency relationship?'))return;
+  try{
+    const {error}=await client.from('cr_dependencies').delete().eq('id',dependency.id).eq('organization_id',orgId);
+    if(error)throw error;
+    await loadDependencies();
+  }catch(e){show('dependencyStatus','Could not remove dependency: '+errText(e),'error')}
+}
+
+async function updateStatus(x,done){setBusy(true);try{const status=done?'done':'open';const now=new Date().toISOString();const patch={status,completed_at:done?now:null,updated_at:now};const {error}=await client.from('cr_commitments').update(patch).eq('id',x.id).eq('organization_id',orgId);if(error)throw error;await loadCommitments()}catch(e){show('dataStatus','Could not update commitment: '+errText(e),'error');await loadCommitments()}finally{setBusy(false)}}
 async function deleteCommitment(x){if(!confirm('Delete this commitment permanently?'))return;setBusy(true);try{const {error}=await client.from('cr_commitments').delete().eq('id',x.id).eq('organization_id',orgId);if(error)throw error;await loadCommitments()}catch(e){show('dataStatus','Could not delete commitment: '+errText(e),'error')}finally{setBusy(false)}}
-$('toggleForm').addEventListener('click',()=>{$('commitFormWrap').classList.toggle('open');if($('commitFormWrap').classList.contains('open'))$('commitTitle').focus()});
-function closeCommitForm(){$('commitFormWrap').classList.remove('open');$('commitForm').reset();hide('commitStatus')}
+let editingCommitmentId=null;
+$('toggleForm').addEventListener('click',()=>{
+  closeCommitForm();
+  $('commitFormWrap').classList.add('open');
+  $('commitFormTitle').textContent='New commitment';
+  $('commitSubmit').textContent='Save commitment';
+  $('commitTitle').focus();
+});
+function closeCommitForm(){
+  editingCommitmentId=null;
+  $('commitFormWrap').classList.remove('open');
+  $('commitForm').reset();
+  $('commitFormTitle').textContent='New commitment';
+  $('commitSubmit').textContent='Save commitment';
+  if($('commitState'))$('commitState').value='open';
+  hide('commitStatus');
+}
+function editCommitment(x){
+  editingCommitmentId=x.id;
+  $('commitTitle').value=x.title||'';
+  $('projectId').value=x.project_id||'';
+  $('details').value=x.details||'';
+  $('ownerName').value=x.owner_name||'';
+  $('counterparty').value=x.counterparty||'';
+  $('dueDate').value=x.due_date||'';
+  $('priority').value=x.priority||'normal';
+  $('confidence').value=x.confidence||'medium';
+  $('sourceType').value=x.source_type||'manual';
+  $('sourceExcerpt').value=x.source_excerpt||'';
+  $('sourceUrl').value=x.source_url||'';
+  $('commitState').value=x.status||'open';
+  $('commitFormTitle').textContent='Edit commitment';
+  $('commitSubmit').textContent='Save changes';
+  hide('commitStatus');
+  $('commitFormWrap').classList.add('open');
+  $('commitTitle').focus();
+}
 $('cancelCommit').addEventListener('click',closeCommitForm);
-$('commitForm').addEventListener('submit',async e=>{e.preventDefault();if(!orgId){show('commitStatus','Create or select a workspace first.','error');return}const title=$('commitTitle').value.trim();if(title.length<2){show('commitStatus','Commitment title must contain at least 2 non-space characters.','error');return}setBusy(true);try{const payload={organization_id:orgId,project_id:$('projectId').value||null,title,details:$('details').value.trim(),owner_name:$('ownerName').value.trim(),counterparty:$('counterparty').value.trim(),due_date:$('dueDate').value||null,priority:$('priority').value,confidence:$('confidence').value,source_type:$('sourceType').value,status:'open',created_by:user.id};const {error}=await client.from('cr_commitments').insert(payload);if(error)throw error;closeCommitForm();await loadCommitments()}catch(ex){show('commitStatus','Could not save commitment: '+errText(ex),'error')}finally{setBusy(false)}});
+$('commitForm').addEventListener('submit',async e=>{
+  e.preventDefault();
+  if(!orgId){show('commitStatus','Create or select a workspace first.','error');return}
+  const title=$('commitTitle').value.trim();
+  if(title.length<2){show('commitStatus','Commitment title must contain at least 2 non-space characters.','error');return}
+  const sourceUrl=$('sourceUrl').value.trim();
+  if(sourceUrl){
+    try{const parsed=new URL(sourceUrl);if(!['https:','http:'].includes(parsed.protocol))throw new Error('Unsupported URL')}
+    catch{show('commitStatus','Enter a valid HTTP or HTTPS source URL.','error');return}
+  }
+  const nextStatus=$('commitState').value;
+  const now=new Date().toISOString();
+  const fields={
+    organization_id:orgId,
+    project_id:$('projectId').value||null,
+    title,
+    details:$('details').value.trim(),
+    owner_name:$('ownerName').value.trim(),
+    counterparty:$('counterparty').value.trim(),
+    due_date:$('dueDate').value||null,
+    priority:$('priority').value,
+    confidence:$('confidence').value,
+    source_type:$('sourceType').value,
+    source_excerpt:$('sourceExcerpt').value.trim(),
+    source_url:sourceUrl,
+    status:nextStatus,
+    completed_at:nextStatus==='done'?now:null,
+    updated_at:now
+  };
+  setBusy(true);
+  try{
+    let error;
+    if(editingCommitmentId){
+      ({error}=await client.from('cr_commitments').update(fields).eq('id',editingCommitmentId).eq('organization_id',orgId));
+    }else{
+      ({error}=await client.from('cr_commitments').insert({...fields,created_by:user.id}));
+    }
+    if(error)throw error;
+    closeCommitForm();
+    await loadCommitments();
+    await loadDependencies();
+  }catch(ex){show('commitStatus','Could not save commitment: '+errText(ex),'error')}
+  finally{setBusy(false)}
+});
+$('commitSearch').addEventListener('input',render);
+$('commitSort').addEventListener('change',render);
+
 document.querySelectorAll('[data-filter]').forEach(b=>b.addEventListener('click',()=>{filter=b.dataset.filter;document.querySelectorAll('[data-filter]').forEach(x=>x.classList.toggle('active',x===b));render()}));
-$('signOutBtn').addEventListener('click',async()=>{setBusy(true);try{const {error}=await client.auth.signOut();if(error)throw error;user=null;orgs=[];commitments=[];projects=[];evidenceItems=[];reviews=[];auditEvents=[];$('workspacePanel').classList.add('hidden');showOnlyAuth()}catch(e){show('globalStatus','Sign out failed: '+errText(e),'error')}finally{setBusy(false)}});
+$('signOutBtn').addEventListener('click',async()=>{setBusy(true);try{const {error}=await client.auth.signOut();if(error)throw error;user=null;orgs=[];commitments=[];projects=[];evidenceItems=[];reviews=[];auditEvents=[];dependencies=[];$('workspacePanel').classList.add('hidden');showOnlyAuth()}catch(e){show('globalStatus','Sign out failed: '+errText(e),'error')}finally{setBusy(false)}});
 
  // Progressive Web App shell. Authentication and API responses are never cached.
 let installPromptEvent = null;
