@@ -21,8 +21,8 @@
 - Commitment status values were checked against the database CHECK constraint: `open`, `in_progress`, `blocked`, `done`, `cancelled`.
 - Priority values were checked against the database CHECK constraint: `low`, `normal`, `high`, `urgent`.
 - The browser code contains no service-role or secret key pattern; the embedded key is a public publishable key.
-- Regression checks now cover the database's two-character trimmed title minimum and remove inert auth-listener registrations.
-- GitHub Actions static-contract run passed on commit `82d92ae68e5c07e56f79a8e6e64d9ec6f5c33b3b`: https://github.com/rezamp7027-stack/Commitment-Radar/actions/runs/38784101439
+- Regression checks cover the database's two-character trimmed title minimum, cancelled-status metrics, and auth-listener setup.
+- GitHub Actions static-contract run passed after the latest frontend fixes (8 tests) on commit `454c84529a1865a83a7330cc56c9b1d33495496f`: https://github.com/rezamp7027-stack/Commitment-Radar/actions/runs/38784601408
 - The database CI run passed both the PostgreSQL contract suite and isolated local Supabase Auth/PostgREST integration suite on database commit `7d2aa233fa04fabd69bb3080c0c1ac1fbd52c302`: https://github.com/rezamp7027-stack/Commitment-Radar/actions/runs/38755403462
 - Supabase security advisor returned no findings on 2026-10-15. Performance advisor reported 22 unused-index notices; these are informational on a low-usage/empty dataset and do not justify dropping indexes without workload evidence.
 - RLS policy definitions and helper functions were inspected. Local CI covers tenant isolation and viewer write denial; hosted two-account verification against the connected project remains NOT RUN.
