@@ -17,4 +17,4 @@ jobs:
         with:
           node-version: 22
       - name: Run static contract tests
-        run: node --test tests/static-contract.test.mjs
+        run: node --test tests/*.test.mjs
