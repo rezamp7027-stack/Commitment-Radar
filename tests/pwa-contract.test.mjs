@@ -27,6 +27,8 @@ test('PWA manifest has a valid standalone install configuration', () => {
 test('HTML links the manifest and exposes install prompt only when supported', () => {
   assert.match(html, /rel="manifest" href="\.\/manifest\.webmanifest"/);
   assert.match(html, /id="installAppBtn"/);
+  assert.match(html, /id="installHelp"/);
+  assert.match(app, /Add to Home Screen/);
   assert.match(app, /beforeinstallprompt/);
   assert.match(app, /navigator\.serviceWorker\.register\('\.\/sw\.js'/);
   assert.match(app, /window\.isSecureContext/);
