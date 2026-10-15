@@ -16,5 +16,9 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Run static contract tests
-        run: node --test tests/*.test.mjs
+      - name: Install pinned browser-test dependency
+        run: npm install --no-package-lock
+      - name: Install Chromium for browser smoke tests
+        run: npx playwright install --with-deps chromium
+      - name: Run contract and browser smoke tests
+        run: npm test
