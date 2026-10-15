@@ -5,42 +5,41 @@ Verified on 2026-10-15:
 - GitHub repository: https://github.com/rezamp7027-stack/Commitment-Radar (default branch: main).
 - Supabase project `htfrixfcirgrhlmwtkjs` is `ACTIVE_HEALTHY`.
 - Database migration history includes `commitment_radar_initial_schema` and `commitment_radar_backend_hardening`.
-- The `public.cr_*` domain tables inspected have RLS enabled. Policy counts vary by table; a count is not a proof that policy expressions are correct.
-- Root-level README, index.html, app.js and style.css were absent at initial inspection. README and a new interactive index.html have now been committed.
-- Figma file exists at https://www.figma.com/design/MSStA5yUWywjVshGj5Krgo. Automated design editing was blocked by the account's Figma MCP call limit.
-- Canva presentation generation was blocked by the account credit quota.
+- RLS is enabled on the inspected core application tables. Policy expressions were inspected; isolation has not been tested with two real accounts.
+- Existing database exposes authenticated `cr_create_organization(p_name)` for workspace creation.
+- The browser client is implemented in root `index.html`; it requires a public anon/publishable key to be entered in the connection panel.
+- Static parsing of the inline module script succeeded after the latest fixes. This is not a browser integration test.
+- Figma editing and Canva presentation generation are deferred because of tool account limits; no design deliverable completion is claimed.
 
-## Current delivered slice
-The browser prototype supports adding, completing, deleting and filtering commitments, calculates summary counts, and persists state in localStorage. It is intentionally labelled local-only. It is not connected to Supabase and is not a production deployment.
+## Implemented
+- Responsive dashboard UI with loading, empty and error states.
+- Supabase JS v2 client configuration in browser using only the public key.
+- Email/password sign-in and sign-up flows.
+- Workspace membership discovery, workspace creation through the existing RPC, and workspace switching.
+- Authenticated commitment list/create/complete/reopen/delete flows using existing schema columns.
+- Summary metrics and filters derived from the loaded workspace records.
+- Architecture, verification checklist, and supervised agent-team contract.
 
-## Proposed architecture
-1. Web interface: accessible responsive dashboard and commitment form.
-2. Auth: Supabase Auth session; no privileged credentials in browser code.
-3. Data access: narrow client-side data module for authenticated CRUD calls.
-4. Database: existing `cr_*` schema; enforce user/org access in Postgres RLS, never only in UI.
-5. Evidence and audit: use the existing schema where requirements warrant it; avoid logging secrets or sensitive payloads.
+## Current limitations
+- No browser-based integration test has been run.
+- Cross-organization isolation and role permissions still require runtime verification with separate test accounts.
+- Hosting, CI, and production deployment status remain unverified.
+- The public key must be configured by the user in the browser; no key or secret was embedded in source.
+- Figma and Canva are deferred by request.
 
-## Next engineering tasks
-- [ ] Inspect every source path and hosting/deployment workflow on main.
-- [ ] Confirm exact schema columns and constraints for commitments, memberships, organizations, evidence, dependencies, reviews and audit events.
-- [ ] Implement Supabase client initialization using project URL and public anon/publishable key from deployment configuration.
-- [ ] Add authenticated list/create/update/complete/delete flows; handle loading, empty, permission-denied, offline and expired-session states.
-- [ ] Verify organization membership checks and RLS policies with at least two separate test users/organizations.
-- [ ] Add automated tests for form validation, filters, overdue calculation, and authorization boundaries.
-- [ ] Run production build and security checks, inspect the resulting diff, and only then consider deployment.
+## Architecture
+1. Browser interface: accessible responsive dashboard and forms.
+2. Supabase Auth: email/password session.
+3. Client adapter: authenticated reads/writes using the current session JWT.
+4. PostgreSQL: existing `cr_*` schema; RLS and database helper functions authorize access.
+5. Human approval: required for schema changes, production configuration, and deployment.
 
-## Acceptance checks
-- A user cannot read or mutate another organization's commitments by changing a request payload.
-- Unauthenticated requests cannot access private commitment records.
-- No service-role key, secret, or personal data is committed to the frontend repository.
-- Dashboard summary counts match the rows returned by the authenticated database query.
-- Mobile layouts work at narrow widths and controls remain keyboard accessible.
-- Tests and deployment are reported as complete only with fresh, inspectable evidence.
+## Release gates
+- Complete every runtime test in `docs/verification-checklist.md`.
+- Verify user/org isolation and viewer/editor permissions using two or more test accounts.
+- Check browser console, mobile layouts, authentication redirects, and email confirmation.
+- Perform a fresh independent code/security review tied to the exact commit.
+- Do not report the app as production-ready until tests and hosting are evidenced.
 
-## Supervised agent-team contract (proposed, not executed)
-- A-01 Implementation: change only approved frontend files; deliver commit and test notes.
-- A-02 Independent verifier: read-only review of diff, tests, RLS policy expressions, and acceptance evidence; cannot edit production code.
-- Human owner: approve schema changes, production writes, secrets/configuration, and deployment.
-- Stop/escalate on missing schema assumptions, failed RLS isolation, unexpected repository changes, exposed credentials, or ambiguous write outcomes.
-
-No independent Codelit agent execution, production deployment, or end-to-end test run is claimed by this document.
+## Supervised agent-team contract
+See `docs/agent-team-contract.md`. It is a design artifact only: no independent Codelit agent execution or deployment is claimed.
