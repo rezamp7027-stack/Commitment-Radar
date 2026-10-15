@@ -43,7 +43,7 @@ The diagram describes the intended and inspected database flow; it is not a runt
 
 - Apply the versioned migration only once per environment. Do not reapply it manually to a database where it is recorded.
 - Keep the original project and unrelated Hashttick root files unchanged.
-- If a fresh environment is provisioned, ensure the baseline schema migration source is available before replaying the hardening migration. The historical initial migration's source was not present in the checked Git branches at the start of this phase; see the phase report.
+- A reconstructed baseline migration is now stored at `supabase/migrations/20261015112619_commitment_radar_initial_schema.sql`, using the live pre-hardening catalog as evidence. It was not applied to the current project. Because the original historical file was unavailable, this is a reconstruction rather than a byte-for-byte recovery; clean-room bootstrap still needs validation in a separate disposable Supabase environment.
 
 ## Verification
 
