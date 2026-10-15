@@ -115,6 +115,7 @@ test('browser workflows: commitments, projects, evidence, reviews, audit and wor
     await env.page.locator('[data-view="audit"]').click();
     await env.page.locator('#auditList').getByText('commitment · insert').waitFor();
 
+    await env.page.locator('[data-view="overview"]').click();
     await env.page.locator('#workspaceSelect').selectOption('org-2');
     await env.page.locator('#items').getByText('Second workspace only').waitFor();
     assert.equal(await env.page.locator('#items').getByText('Existing commitment').count(), 0);
