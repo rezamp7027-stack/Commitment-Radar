@@ -292,7 +292,6 @@ async function deleteDependency(dependency){
 
 async function updateStatus(x,done){if(!canEdit())return;setBusy(true);try{const status=done?'done':'open';const now=new Date().toISOString();const patch={status,completed_at:done?now:null,updated_at:now};const {error}=await client.from('cr_commitments').update(patch).eq('id',x.id).eq('organization_id',orgId);if(error)throw error;await loadCommitments()}catch(e){show('dataStatus','Could not update commitment: '+errText(e),'error');await loadCommitments()}finally{setBusy(false)}}
 async function deleteCommitment(x){if(!canEdit()||!confirm('Delete this commitment permanently?'))return;setBusy(true);try{const {error}=await client.from('cr_commitments').delete().eq('id',x.id).eq('organization_id',orgId);if(error)throw error;await loadCommitments()}catch(e){show('dataStatus','Could not delete commitment: '+errText(e),'error')}finally{setBusy(false)}}
-let editingCommitmentId=null;
 $('toggleForm').addEventListener('click',()=>{
   closeCommitForm();
   $('commitFormWrap').classList.add('open');
