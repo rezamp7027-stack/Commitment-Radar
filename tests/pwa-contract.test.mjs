@@ -23,7 +23,7 @@ test('HTML links the manifest and exposes install prompt only when supported', (
   assert.match(html, /id="installAppBtn"/);
   assert.match(app, /beforeinstallprompt/);
   assert.match(app, /navigator\.serviceWorker\.register\('\.\/sw\.js'/);
-  assert.match(html, /window\.isSecureContext/);
+  assert.match(app, /window\.isSecureContext/);
 });
 
 test('service worker uses a versioned shell cache and removes stale app shell caches', () => {
