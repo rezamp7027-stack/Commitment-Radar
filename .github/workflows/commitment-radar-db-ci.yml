@@ -70,6 +70,9 @@ jobs:
       - name: Apply backend hardening
         run: psql -v ON_ERROR_STOP=1 -f commitment-radar/supabase/migrations/20261015120014_commitment_radar_backend_hardening.sql
 
+      - name: Apply dependency-cycle protection
+        run: psql -v ON_ERROR_STOP=1 -f commitment-radar/supabase/migrations/20261015130000_prevent_dependency_cycles.sql
+
       - name: Verify schema and grants
         run: psql -v ON_ERROR_STOP=1 -f commitment-radar/supabase/tests/security_contract.sql
 

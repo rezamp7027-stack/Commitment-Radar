@@ -1,0 +1,74 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+
+const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+const app = readFileSync(new URL('../app.js', import.meta.url), 'utf8');
+const manifest = JSON.parse(readFileSync(new URL('../manifest.webmanifest', import.meta.url), 'utf8'));
+const sw = readFileSync(new URL('../sw.js', import.meta.url), 'utf8');
+const offline = readFileSync(new URL('../offline.html', import.meta.url), 'utf8');
+const icon = readFileSync(new URL('../icons/icon.svg', import.meta.url), 'utf8');
+const icon192 = readFileSync(new URL('../icons/icon-192.png', import.meta.url));
+const icon512 = readFileSync(new URL('../icons/icon-512.png', import.meta.url));
+const appleIcon = readFileSync(new URL('../icons/apple-touch-icon.png', import.meta.url));
+
+test('PWA manifest has a valid standalone install configuration', () => {
+  assert.equal(manifest.name, 'Commitment Radar');
+  assert.equal(manifest.start_url, './');
+  assert.equal(manifest.scope, './');
+  assert.equal(manifest.display, 'standalone');
+  assert.equal(manifest.theme_color, '#0b1220');
+  assert.ok(manifest.icons.some(item => item.src === './icons/icon.svg' && item.type === 'image/svg+xml'));
+  assert.ok(manifest.icons.some(item => item.src === './icons/icon-192.png' && item.sizes === '192x192'));
+  assert.ok(manifest.icons.some(item => item.src === './icons/icon-512.png' && item.sizes === '512x512'));
+  assert.ok(manifest.icons.some(item => item.src === './icons/icon-512.png' && item.purpose === 'maskable'));
+});
+
+test('HTML links the manifest and exposes install prompt only when supported', () => {
+  assert.match(html, /rel="manifest" href="\.\/manifest\.webmanifest"/);
+  assert.match(html, /id="installAppBtn"/);
+  assert.match(html, /id="installHelp"/);
+  assert.match(app, /Add to Home Screen/);
+  assert.match(app, /beforeinstallprompt/);
+  assert.match(app, /navigator\.serviceWorker\.register\('\.\/sw\.js'/);
+  assert.match(app, /window\.isSecureContext/);
+});
+
+test('service worker uses a versioned shell cache and removes stale app shell caches', () => {
+  assert.match(sw, /const CACHE_PREFIX = 'commitment-radar-shell-'/);
+  assert.ok(sw.includes("const CACHE_NAME = `${CACHE_PREFIX}v2`"));
+  assert.match(sw, /name\.startsWith\(CACHE_PREFIX\).*name !== CACHE_NAME/);
+  assert.match(sw, /icon-192\.png/);
+  assert.match(sw, /icon-512\.png/);
+  assert.match(sw, /apple-touch-icon\.png/);
+  assert.match(sw, /request\.mode === 'navigate'/);
+  assert.match(sw, /cache\.match\(OFFLINE_URL\)/);
+});
+
+test('service worker does not intercept cross-origin requests or non-GET requests', () => {
+  assert.match(sw, /request\.method !== 'GET'/);
+  assert.match(sw, /url\.origin !== self\.location\.origin/);
+  assert.match(sw, /Never cache Supabase, auth, or CDN traffic/);
+  assert.doesNotMatch(sw, /caches\.open\([^)]*\).*supabase/i);
+});
+
+test('offline fallback does not claim private workspace data is available offline', () => {
+  assert.match(offline, /needs a connection to securely load your workspace/i);
+  assert.match(offline, /private workspace data is not stored/i);
+});
+
+test('PWA icons include valid PNG signatures and the product SVG', () => {
+  assert.match(icon, /^<svg\s/);
+  assert.match(icon, /#0b1220/);
+  assert.match(icon, /#62e0c5/);
+  for (const png of [icon192, icon512, appleIcon]) {
+    assert.equal(png.readUInt32BE(0), 0x89504e47);
+    assert.equal(png.toString('ascii', 1, 4), 'PNG');
+  }
+  assert.equal(icon192.readUInt32BE(16), 192);
+  assert.equal(icon192.readUInt32BE(20), 192);
+  assert.equal(icon512.readUInt32BE(16), 512);
+  assert.equal(icon512.readUInt32BE(20), 512);
+  assert.equal(appleIcon.readUInt32BE(16), 180);
+  assert.equal(appleIcon.readUInt32BE(20), 180);
+});

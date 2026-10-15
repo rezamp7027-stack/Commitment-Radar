@@ -1,7 +1,7 @@
 # Commitment Radar — Verification Checklist
 
 ## Scope and evidence
-- Target: `index.html` on the `main` branch.
+- Candidate target: `feature/pwa-foundation` branch of `rezamp7027-stack/Commitment-Radar` (not yet merged to `main`).
 - Backend: Supabase project `htfrixfcirgrhlmwtkjs`.
 - This is a manual/automated test plan. Tests below are not marked passed unless an actual run produced evidence.
 
@@ -17,17 +17,18 @@
 - Responsive CSS and semantic labels for primary controls.
 
 ## Static verification completed
-- Inline module script parsed successfully after stripping the browser import line and wrapping the module body in an async function.
+- `app.js` parsed successfully after stripping the external Supabase import and wrapping the module body in an async function.
 - Commitment status values were checked against the database CHECK constraint: `open`, `in_progress`, `blocked`, `done`, `cancelled`.
 - Priority values were checked against the database CHECK constraint: `low`, `normal`, `high`, `urgent`.
 - The browser code contains no service-role or secret key pattern; the embedded key is a public publishable key.
 - Regression checks cover the database's two-character trimmed title minimum, cancelled-status metrics, and auth-listener setup.
-- GitHub Actions static-contract run passed after the latest frontend fixes (8 tests) on commit `454c84529a1865a83a7330cc56c9b1d33495496f`: https://github.com/rezamp7027-stack/Commitment-Radar/actions/runs/38784601408
+- - PWA and workspace-module contract tests passed in GitHub Actions (20 tests) on commit `f1f182bb1ad4d3dd7f96b5d7f73be5fc2646295d`: https://github.com/rezamp7027-stack/Commitment-Radar/actions/runs/38792932818
 - The database CI run passed both the PostgreSQL contract suite and isolated local Supabase Auth/PostgREST integration suite on database commit `7d2aa233fa04fabd69bb3080c0c1ac1fbd52c302`: https://github.com/rezamp7027-stack/Commitment-Radar/actions/runs/38755403462
 - Supabase security advisor returned no findings on 2026-10-15. Performance advisor reported 22 unused-index notices; these are informational on a low-usage/empty dataset and do not justify dropping indexes without workload evidence.
 - RLS policy definitions and helper functions were inspected. Local CI covers tenant isolation and viewer write denial; hosted two-account verification against the connected project remains NOT RUN.
 
 ## Remaining manual/hosted runtime tests — NOT RUN
+- Browser E2E for the new Projects, Evidence, Review Queue, Audit views and PWA install/offline lifecycle.
 1. Configure the actual project URL and public key; confirm the client connects.
 2. Sign up with a test account and complete email confirmation if enabled.
 3. Sign in, create a workspace, reload, and confirm the workspace remains available.

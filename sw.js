@@ -1,0 +1,58 @@
+const CACHE_PREFIX = 'commitment-radar-shell-';
+const CACHE_NAME = `${CACHE_PREFIX}v3`;
+const OFFLINE_URL = new URL('./offline.html', self.location.href).toString();
+const SHELL_ASSETS = [
+  OFFLINE_URL,
+  new URL('./icons/icon.svg', self.location.href).toString(),
+  new URL('./icons/icon-192.png', self.location.href).toString(),
+  new URL('./icons/icon-512.png', self.location.href).toString(),
+  new URL('./icons/apple-touch-icon.png', self.location.href).toString()
+];
+
+self.addEventListener('install', event => {
+  event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(SHELL_ASSETS)));
+});
+
+self.addEventListener('activate', event => {
+  event.waitUntil((async () => {
+    const names = await caches.keys();
+    await Promise.all(names.filter(name => name.startsWith(CACHE_PREFIX) && name !== CACHE_NAME).map(name => caches.delete(name)));
+    await self.clients.claim();
+  })());
+});
+
+self.addEventListener('fetch', event => {
+  const request = event.request;
+  if (request.method !== 'GET') return;
+  const url = new URL(request.url);
+  if (url.origin !== self.location.origin) return; // Never cache Supabase, auth, or CDN traffic.
+
+  if (request.mode === 'navigate') {
+    event.respondWith((async () => {
+      const cache = await caches.open(CACHE_NAME);
+      const offlinePage = () => cache.match(OFFLINE_URL);
+      if (self.navigator && self.navigator.onLine === false) {
+        return (await offlinePage()) || Response.error();
+      }
+      try {
+        const response = await fetch(request);
+        if (response.ok) return response;
+        return response;
+      } catch {
+        return (await offlinePage()) || Response.error();
+      }
+    })());
+    return;
+  }
+
+  if (SHELL_ASSETS.includes(url.href)) {
+    event.respondWith((async () => {
+      const cache = await caches.open(CACHE_NAME);
+      const cached = await cache.match(request);
+      if (cached) return cached;
+      const response = await fetch(request);
+      if (response.ok) await cache.put(request, response.clone());
+      return response;
+    })());
+  }
+});
