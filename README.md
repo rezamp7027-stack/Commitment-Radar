@@ -5,19 +5,25 @@ A commitment-tracking product designed to make promises visible, reviewable, and
 ## Current state
 - The Supabase project `htfrixfcirgrhlmwtkjs` was reported `ACTIVE_HEALTHY` when checked.
 - The database contains `cr_*` tables for organizations, memberships, projects, commitments, evidence, dependencies, reviews, and audit events.
-- The browser client now supports Supabase email/password authentication, organization/workspace discovery and creation, and commitment CRUD through the authenticated client.
-- The app requires the project's public anon/publishable key to be configured in the Connection panel. Do not use a service-role or secret key in the browser.
-- Runtime integration and cross-organization RLS isolation have not yet been verified; see the checklist below.
-- This repository is not confirmed deployed. No production release is claimed.
+- The browser client supports Supabase email/password authentication, workspace discovery/creation, and commitment CRUD.
+- The frontend uses the project's **public publishable key** as a default. It is intended for browser use; it is not a secret. Do not replace it with a service-role or secret key.
+- Runtime integration and cross-organization RLS isolation have not yet been verified. This repository is not confirmed deployed.
 
 ## Run
-Serve the repository's root `index.html` over HTTPS or a local static web server. Open **Connection**, enter:
-1. Project URL: `https://htfrixfcirgrhlmwtkjs.supabase.co`
-2. Public anon/publishable key from Supabase Project Settings → API Keys.
+Serve root `index.html` over HTTPS or a local static web server. The page is preconfigured for the associated Supabase project. Open **Connection** only if you need to change the project URL/key. Use a public anon/publishable key only.
 
-Then sign in or create an account. If email confirmation is enabled, confirm the address before signing in. Create a workspace if the account has no memberships.
+Sign in or create an account. If email confirmation is enabled, confirm the address before signing in. Create a workspace if the account has no memberships.
 
-The page imports Supabase JS v2 from `https://esm.sh/@supabase/supabase-js@2`; internet access to that CDN is required. The public configuration is saved in this browser's local storage. Supabase session persistence is handled by the Supabase client.
+The page imports Supabase JS v2 from `https://esm.sh/@supabase/supabase-js@2`; internet access to that CDN is required. A user-provided override for public configuration is stored in this browser's local storage. Supabase session persistence is handled by the Supabase client.
+
+## Verification
+Run local static checks with Node.js 22 or newer:
+
+```sh
+node --test tests/static-contract.test.mjs
+```
+
+GitHub Actions is configured to run the same checks on pushes and pull requests to `main`. Static tests do not replace browser integration tests or RLS isolation tests.
 
 ## Security
 - Only use a public anon/publishable key in the browser.
