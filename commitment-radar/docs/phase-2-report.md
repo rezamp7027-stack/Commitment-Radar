@@ -2,7 +2,7 @@
 
 ## Status
 
-Backend hardening migration applied to the linked Supabase project and source committed to the isolated branch `commitment-radar/backend-hardening`.
+Backend hardening migration applied to the linked Supabase project. Artifacts are committed under `commitment-radar/` on the isolated branch `feature/commitment-radar`; the Hashttick root files were not changed on this branch.
 
 ## Changes actually applied
 
@@ -12,7 +12,8 @@ Backend hardening migration applied to the linked Supabase project and source co
 4. Revoked public/anonymous execution on the relevant functions and removed the old public authorization-helper functions.
 5. Added fourteen supporting indexes for the foreign keys reported by Supabase's performance advisor.
 6. Recorded migration `20261015120014_commitment_radar_backend_hardening` in Supabase migration history.
-7. Added a SQL catalog contract test and architecture notes in this branch.
+7. Added a SQL catalog contract test, backend architecture notes, and a supervised engineering-team contract.
+8. Reconstructed the baseline migration at `supabase/migrations/20261015112619_commitment_radar_initial_schema.sql` from the live pre-hardening catalog, since the original SQL source could not be found in checked Git branches. This file has **not** been applied to the current project.
 
 ## Fresh verification evidence
 
@@ -22,16 +23,28 @@ Backend hardening migration applied to the linked Supabase project and source co
 - Catalog query found no policies referencing the old public helper names.
 - The organization-creation wrapper is not `SECURITY DEFINER`; anonymous execute is false and authenticated execute is true.
 - The fourteen required indexes exist.
+- The SQL catalog contract test executed successfully against the target project.
 - All eight Commitment Radar tables remain at zero rows; no application data was inserted, updated, or deleted.
 - Performance advisor reports 22 unused-index INFO findings. This is expected for a schema with no workload and is not a reason to drop the indexes before usage patterns exist.
 
-## Known gap carried forward
+## Remaining release gates
 
-The database history contains `20261015112619 commitment_radar_initial_schema`, but the original SQL source was not found in the checked repository branches during Phase 1. The hardening migration is versioned and committed. Before claiming clean-room reproducibility, recover or reconstruct and validate a complete baseline schema migration for a new Supabase project. Do not rerun the initial schema against the current project.
+- Validate the reconstructed baseline migration in a separate disposable Supabase project before relying on clean-room provisioning. It is a catalog-based reconstruction, not a byte-for-byte recovery of the original source.
+- Run authenticated integration tests with two users in separate organizations; verify cross-tenant reads and writes are denied.
+- Verify viewer/editor/admin/owner permissions with actual JWT-authenticated requests.
+- Add CI that runs SQL contract checks against an ephemeral database or disposable Supabase project.
+- Complete frontend, visual QA, and deployment in later phases.
+
+## Design and planning artifacts
+
+- Figma FigJam architecture board: https://www.figma.com/board/zyZF3DvNyu5fwttuCw5rv9
+- Canva editable engineering handoff: https://canva.link/1zexr7cq4cozlou
+- Codelit agent-team contract is documented locally in `docs/agent-team-contract.md`. Codelit templates were used for the contract format; no Codelit agent runtime was executed.
+- Code Work, Code Verification, Supabase, Figma, and Codebase Design guidance informed the workflow. The general Code skill is intended for standalone code generation rather than editing an existing repository, so repository changes were made through GitHub after inspection.
 
 ## Not claimed
 
 - No authenticated end-to-end integration test with real user accounts was run.
 - No penetration test was performed.
 - No production frontend or deployment was created in this phase.
-- The Figma architecture board is a documentation artifact, not proof of runtime behavior.
+- The Figma and Canva artifacts document the work; they are not proof of runtime behavior.
