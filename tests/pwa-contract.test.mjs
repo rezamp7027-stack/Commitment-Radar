@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+const app = readFileSync(new URL('../app.js', import.meta.url), 'utf8');
 const manifest = JSON.parse(readFileSync(new URL('../manifest.webmanifest', import.meta.url), 'utf8'));
 const sw = readFileSync(new URL('../sw.js', import.meta.url), 'utf8');
 const offline = readFileSync(new URL('../offline.html', import.meta.url), 'utf8');
@@ -20,8 +21,8 @@ test('PWA manifest has a valid standalone install configuration', () => {
 test('HTML links the manifest and exposes install prompt only when supported', () => {
   assert.match(html, /rel="manifest" href="\.\/manifest\.webmanifest"/);
   assert.match(html, /id="installAppBtn"/);
-  assert.match(html, /beforeinstallprompt/);
-  assert.match(html, /navigator\.serviceWorker\.register\('\.\/sw\.js'/);
+  assert.match(app, /beforeinstallprompt/);
+  assert.match(app, /navigator\.serviceWorker\.register\('\.\/sw\.js'/);
   assert.match(html, /window\.isSecureContext/);
 });
 
