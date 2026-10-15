@@ -99,6 +99,22 @@ test('browser smoke: manifest loads and service worker registers on localhost', 
   }
 });
 
+test('browser smoke: offline navigation falls back to the privacy-safe offline page', async () => {
+  const env = await openApp();
+  try {
+    await env.page.goto(env.url, { waitUntil: 'networkidle' });
+    await env.page.evaluate(async () => { await navigator.serviceWorker.ready; });
+    await env.context.setOffline(true);
+    await env.page.reload({ waitUntil: 'domcontentloaded' });
+    await env.page.getByRole('heading', { name: "You're offline." }).waitFor();
+    assert.match(await env.page.locator('body').innerText(), /private workspace data is not stored/i);
+  } finally {
+    await env.context.setOffline(false).catch(() => {});
+    await env.browser.close();
+    await new Promise(resolveClose => env.server.close(resolveClose));
+  }
+});
+
 test('browser smoke: mobile layout does not overflow horizontally', async () => {
   const env = await openApp({ width: 390, height: 844 });
   try {
