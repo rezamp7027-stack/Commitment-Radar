@@ -49,3 +49,11 @@ test('auth state listener is registered only after the Supabase client is create
   assert.match(moduleSource, /client\.auth\.onAuthStateChange\(\(event,session\)/);
   assert.doesNotMatch(moduleSource, /client\?\.auth\?\.onAuthStateChange/);
 });
+
+test('cancelled commitments are not counted as open or overdue', () => {
+  assert.match(moduleSource, /function isCancelled\(x\)\{return x\.status==='cancelled'\}/);
+  assert.match(moduleSource, /function isOpen\(x\)\{return !isDone\(x\)&&!isCancelled\(x\)\}/);
+  assert.match(moduleSource, /const active=commitments\.filter\(isOpen\)\.length/);
+  assert.match(moduleSource, /function isOverdue\(x\)\{return isOpen\(x\)&&x\.due_date/);
+  assert.match(moduleSource, /cb\.disabled=isCancelled\(x\)/);
+});
