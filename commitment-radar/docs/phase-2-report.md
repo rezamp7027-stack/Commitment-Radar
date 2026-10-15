@@ -32,7 +32,7 @@ Backend hardening is applied to the linked Supabase project. Phase 2 Auth/RLS te
 
 - Clean-room CI validation of the reconstructed baseline plus hardening migration: **confirmed** by GitHub Actions run `38732428069` on 2026-10-15. Both migrations, the schema/grant contract test, and the behavioral test passed in PostgreSQL 16. This does not establish that the baseline provisions a fresh hosted Supabase project. The baseline remains a catalog-based reconstruction, not a byte-for-byte recovery of the original source.
 - The real Supabase Auth/PostgREST harness at `supabase/tests/auth_rls_integration.mjs` creates unique temporary Auth users, signs in for real JWTs, and tests tenant isolation, role boundaries, anonymous RPC denial, creator-ID spoofing, self-elevation, and owner-membership creation with cleanup.
-- GitHub Actions run `38741601962` on `main` **passed**: PostgreSQL 16 contract tests and the local Supabase stack with both committed migrations. The real Auth/PostgREST integration suite passed **11/11** scenarios.
+- GitHub Actions run `38742155518` on `main` **passed**: PostgreSQL 16 contract tests and the local Supabase stack with both committed migrations. The real Auth/PostgREST integration suite passed **11/11** scenarios.
 - The first local integration attempt exposed a CI workdir mistake: the CLI was pointed one directory too deep, so migrations were not discovered. The workflow was corrected to run from `commitment-radar/`; the successful run confirms migrations were applied before tests.
 - The optional hosted-project integration job remains **skipped** until a dedicated disposable hosted project and secrets are configured. This is additional deployment-parity evidence, not a prerequisite for the local real-JWT gate.
 - The workflow triggers on `main`, pull requests to `main`, and manual dispatch. No production Auth users or test rows were created, and the production Supabase project was not modified during this phase.
@@ -42,7 +42,7 @@ Backend hardening is applied to the linked Supabase project. Phase 2 Auth/RLS te
 
 - Real Auth integration harness: `supabase/tests/auth_rls_integration.mjs`.
 - Configuration and safety runbook: `docs/phase-2-auth-integration.md`.
-- Latest full Phase 2 CI evidence: https://github.com/rezamp7027-stack/Commitment-Radar/actions/runs/38741601962 (success; local Supabase Auth/PostgREST integration 11/11; optional hosted job skipped).
+- Verified full Phase 2 CI evidence: https://github.com/rezamp7027-stack/Commitment-Radar/actions/runs/38742155518 (success; local Supabase Auth/PostgREST integration 11/11; optional hosted job skipped).
 - Figma security flow diagram: https://www.figma.com/board/Xq1qDodnEUdIyrUgHIIqeA?utm_source=chatgpt&utm_content=edit_in_figjam.
 
 ## Design and planning artifacts
