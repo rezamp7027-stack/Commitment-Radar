@@ -31,8 +31,8 @@ test('commitment operations use the existing schema and authenticated user ident
 
 test('status and priority values match the inspected database constraints', () => {
   assert.match(moduleSource, /const status=done\?'done':'open'/);
-  assert.match(moduleSource, /value="urgent">Urgent/);
-  assert.doesNotMatch(moduleSource, /value="critical">Critical/);
+  assert.match(html, /value="urgent">Urgent/);
+  assert.doesNotMatch(html, /value="critical">Critical/);
 });
 
 test('no privileged Supabase key pattern is embedded in the frontend', () => {
