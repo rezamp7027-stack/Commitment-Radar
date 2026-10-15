@@ -1,1 +1,0 @@
-<?php require_once '../../config.php'; if($_SERVER['REQUEST_METHOD']!=='POST'){http_response_code(405);header('Allow: POST');header('Content-Type: application/json; charset=utf-8');echo json_encode(['success'=>false,'error'=>'متد غیرمجاز'],JSON_UNESCAPED_UNICODE);exit;}validateCsrf();clearAuthSession();header('Location: ../../login.php');exit;
