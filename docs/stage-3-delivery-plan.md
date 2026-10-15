@@ -5,13 +5,13 @@ Verified on 2026-10-15:
 - GitHub repository: https://github.com/rezamp7027-stack/Commitment-Radar (default branch: main).
 - Supabase project `htfrixfcirgrhlmwtkjs` is `ACTIVE_HEALTHY`.
 - Database migration history includes `commitment_radar_initial_schema` and `commitment_radar_backend_hardening`.
-- RLS is enabled on the inspected core application tables. Policy expressions were inspected; isolation has not been tested with two real accounts.
+- RLS is enabled on the inspected core application tables. Local CI exercised tenant isolation with generated test users; parity against a dedicated hosted project remains unverified.
 - Existing database exposes authenticated `cr_create_organization(p_name)` for workspace creation.
 - The browser client is implemented in root `index.html` and preconfigured with the project's public publishable key; connection-panel override is optional.
 - GitHub Actions static-contract verification passed after the latest frontend fixes on `454c84529a1865a83a7330cc56c9b1d33495496f` (run 38784601408; 8 tests).
 - Database CI passed PostgreSQL contract tests and isolated local Supabase Auth/PostgREST integration tests on the database revision (run 38755403462). This is stronger than static inspection but does not prove hosted-project parity or browser behavior.
 - Supabase security advisor returned no findings; performance advisor showed 22 informational unused-index notices.
-- Canva UI handoff review found schema and scope drift; Figma tool access was blocked by a Starter-plan MCP call limit. Neither artifact has been edited or marked synchronized.
+- Canva UI handoff review found schema and scope drift; corrected text is staged in an unsaved Canva preview. Figma tool access was blocked by a Starter-plan MCP call limit. Neither artifact is synchronized.
 
 ## Implemented
 - Responsive dashboard UI with loading, empty and error states.
