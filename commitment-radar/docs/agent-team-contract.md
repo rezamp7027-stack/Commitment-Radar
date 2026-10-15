@@ -49,8 +49,16 @@ These are proposed roles for a supervised workflow, not evidence that four auton
 | Unindexed FK advisor | Zero findings | Observed after migration |
 | Real user A cannot read organization B | Partial | Synthetic owner-isolation check passed in clean-room CI; live Supabase Auth/JWT integration remains pending |
 | Viewer cannot mutate records | Partial | Synthetic authenticated-role denial check passed in clean-room CI; live Supabase Auth/JWT integration remains pending |
-| Owner can create organization and is owner membership | Partial | Organization RPC and owner-membership check passed in clean-room CI; live Supabase Auth/JWT integration remains pending |
+| Owner can create organization and is owner membership | Partial | Organization RPC and owner-membership check passed in clean-room CI; hosted Auth integration harness added but not run |
 | Reconstructed baseline + hardening migration in clean-room PostgreSQL 16 | Confirmed | GitHub Actions run `38732428069` passed both migrations and both SQL test scripts; hosted Supabase provisioning remains unverified |
+
+## Phase 2 Auth integration execution boundary
+
+- The real Auth/PostgREST harness is `supabase/tests/auth_rls_integration.mjs`.
+- It creates unique temporary users and records only in a dedicated disposable Supabase project; production project ref `htfrixfcirgrhlmwtkjs` is explicitly refused by CI.
+- The hosted job is gated by repository variable `ENABLE_SUPABASE_AUTH_INTEGRATION=true` and secrets `SUPABASE_TEST_URL`, `SUPABASE_TEST_ANON_KEY`, and `SUPABASE_TEST_SERVICE_ROLE_KEY`.
+- The regular CI run checks JavaScript syntax and SQL contract behavior; it does not count a skipped hosted Auth job as a pass.
+- Latest regular CI: run `38740127238` passed; hosted Auth job was skipped pending disposable-project configuration.
 
 ## Related Codelit resource
 
