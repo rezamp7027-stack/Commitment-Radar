@@ -21,7 +21,7 @@ Created a new editable Figma design file with six product screens and a design-s
 - **Design System page:** semantic color palette, typography, spacing/radius references, product rules, and five editable Figma components.
 - **Local variables:** 27 named tokens in the `Commitment Radar Tokens` collection.
 - **Typeface:** IBM Plex Sans (selected as a proposed product-design decision; no existing frontend source was found to establish an existing font standard).
-- **Canva:** The canonical editable Canva Doc is available at [View](https://www.canva.com/d/Gx2q99U6TKNfShP) · [Edit](https://www.canva.com/d/-3ugm7vZ-SO2F-O). The existing 13-page UI handoff presentation was inspected and contains schema inconsistencies; do not treat it as the canonical field contract until it is corrected. A new AI-generated slide deck was not created because Canva reported its design-credit quota was exhausted.
+- **Canva:** The canonical editable Canva Doc is available at [View](https://www.canva.com/d/a1ExuJgwGCHtWB_) · [Edit](https://www.canva.com/d/VajI2f1mDK1KnjZ). The existing 13-page UI handoff presentation was inspected and contains schema inconsistencies; do not treat it as the canonical field contract until it is corrected. A new AI-generated slide deck was not created because Canva reported its design-credit quota was exhausted.
 
 ## Screen scope
 
@@ -75,7 +75,7 @@ The commitment form and detail view use fields observed in `cr_commitments`, inc
 
 ## Final handoff decision and gates before Phase 4
 
-The final product contract is now recorded in [phase-3-final-handoff.md](phase-3-final-handoff.md) and mirrored as an editable [Canva Doc](https://www.canva.com/d/Gx2q99U6TKNfShP). Under the request to complete Phase 3, the working design baseline is IBM Plex Sans, the existing navy/blue/cool-gray palette, and a bounded first vertical slice of authenticated workspace shell → authorized commitments list → commitment detail. These are implementation baselines, not a claim of formal accessibility certification or a live product.
+The final product contract is now recorded in [phase-3-final-handoff.md](phase-3-final-handoff.md) and mirrored as an editable [Canva Doc](https://www.canva.com/d/a1ExuJgwGCHtWB_). Under the request to complete Phase 3, the working design baseline is IBM Plex Sans, the existing navy/blue/cool-gray palette, and a bounded first vertical slice of authenticated workspace shell → authorized commitments list → commitment detail. These are implementation baselines, not a claim of formal accessibility certification or a live product.
 
 1. Sync the final schema/interaction contract into the existing Figma canvas when Figma editing is available. The canvas was not edited during this session because the Figma connector tool-call limit was reached.
 2. Correct the existing Canva UI handoff wherever it conflicts with the verified schema; the new Canva Doc and GitHub handoff are the canonical implementation contracts meanwhile.
