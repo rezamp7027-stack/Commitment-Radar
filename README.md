@@ -7,7 +7,7 @@ A commitment-tracking product designed to make promises visible, reviewable, and
 - The database contains `cr_*` tables for organizations, memberships, projects, commitments, evidence, dependencies, reviews, and audit events.
 - The browser client supports Supabase email/password authentication, workspace discovery/creation, and commitment CRUD.
 - The frontend uses the project's **public publishable key** as a default. It is intended for browser use; it is not a secret. Do not replace it with a service-role or secret key.
-- Runtime integration and cross-organization RLS isolation have not yet been verified. This repository is not confirmed deployed.
+- GitHub Actions static checks and isolated local Supabase Auth/PostgREST RLS integration tests passed. Browser end-to-end tests and parity against a dedicated hosted test project remain unverified. This repository is not confirmed deployed.
 
 ## Run
 Serve root `index.html` over HTTPS or a local static web server. The page is preconfigured for the associated Supabase project. Open **Connection** only if you need to change the project URL/key. Use a public anon/publishable key only.
@@ -38,4 +38,4 @@ GitHub Actions is configured to run the same checks on pushes and pull requests 
 - [Supervised agent-team contract](docs/agent-team-contract.md)
 
 ## Design direction
-Dark navy surfaces, off-white typography, restrained teal accents, and clear commitment status/deadline cues. Figma and Canva deliverables are deferred; the Figma link is a planning artifact, not proof that the design is complete.
+Dark navy surfaces, off-white typography, restrained teal accents, and clear commitment status/deadline cues. The saved Canva UI handoff is not yet synchronized with the current schema and frontend; a correction is staged as an unsaved preview pending approval. Figma review was blocked by the connected Starter plan's tool-call limit, so visual parity is unverified.
