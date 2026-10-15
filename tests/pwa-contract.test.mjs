@@ -27,7 +27,7 @@ test('HTML links the manifest and exposes install prompt only when supported', (
 
 test('service worker uses a versioned shell cache and removes stale app shell caches', () => {
   assert.match(sw, /const CACHE_PREFIX = 'commitment-radar-shell-'/);
-  assert.match(sw, /const CACHE_NAME = `\\$\\{CACHE_PREFIX\\}v1`/);
+  assert.ok(sw.includes("const CACHE_NAME = `${CACHE_PREFIX}v1`"));
   assert.match(sw, /name\.startsWith\(CACHE_PREFIX\).*name !== CACHE_NAME/);
   assert.match(sw, /request\.mode === 'navigate'/);
   assert.match(sw, /cache\.match\(OFFLINE_URL\)/);
