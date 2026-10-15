@@ -391,7 +391,14 @@ window.addEventListener('beforeinstallprompt', event => {
   installAppBtn?.classList.remove('hidden');
 });
 installAppBtn?.addEventListener('click', async () => {
-  if (!installPromptEvent) return;
+  if (!installPromptEvent) {
+    const help = document.getElementById('installHelp');
+    if (help) {
+      help.textContent = 'Android: open your browser menu and choose Install app or Add to Home screen. iPhone/iPad: open this site in Safari, tap Share, then Add to Home Screen.';
+      help.classList.remove('hidden');
+    }
+    return;
+  }
   installPromptEvent.prompt();
   await installPromptEvent.userChoice;
   installPromptEvent = null;
