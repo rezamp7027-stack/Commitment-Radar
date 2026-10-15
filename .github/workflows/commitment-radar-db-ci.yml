@@ -9,9 +9,6 @@ on:
   pull_request:
     branches: ["main"]
   workflow_dispatch:
-    paths:
-      - "commitment-radar/**"
-      - ".github/workflows/commitment-radar-db-ci.yml"
 
 permissions:
   contents: read
