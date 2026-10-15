@@ -1,283 +1,323 @@
--- Reconstructed baseline for Commitment Radar, version 20261015112619.
--- The historical SQL source was not present in the inspected Git branches. This file
--- was reconstructed from the live catalog before backend hardening (tables, constraints,
--- indexes, policies, grants, functions and triggers). It is for clean-room provisioning;
--- do NOT execute it against the already-migrated target project.
-BEGIN;
+-- Commitment Radar: isolated, additive schema. No Hashttick tables are modified or deleted.
+begin;
 
-CREATE TABLE public.cr_organizations (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  name text NOT NULL,
-  owner_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE RESTRICT,
-  created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now(),
-  CONSTRAINT cr_organizations_name_check CHECK (char_length(btrim(name)) BETWEEN 2 AND 120)
+create table public.cr_organizations (
+  id uuid primary key default gen_random_uuid(),
+  name text not null check (char_length(trim(name)) between 2 and 120),
+  owner_id uuid not null references auth.users(id) on delete restrict,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
 );
 
-CREATE TABLE public.cr_memberships (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  organization_id uuid NOT NULL REFERENCES public.cr_organizations(id) ON DELETE CASCADE,
-  user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  role text NOT NULL DEFAULT 'editor',
-  created_at timestamptz NOT NULL DEFAULT now(),
-  CONSTRAINT cr_memberships_role_check CHECK (role = ANY (ARRAY['owner','admin','editor','viewer'])),
-  CONSTRAINT cr_memberships_organization_id_user_id_key UNIQUE (organization_id,user_id),
-  CONSTRAINT cr_memberships_id_organization_id_key UNIQUE (id,organization_id)
+create table public.cr_memberships (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references public.cr_organizations(id) on delete cascade,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  role text not null default 'editor' check (role in ('owner','admin','editor','viewer')),
+  created_at timestamptz not null default now(),
+  unique (organization_id, user_id),
+  unique (id, organization_id)
 );
 
-CREATE TABLE public.cr_projects (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  organization_id uuid NOT NULL REFERENCES public.cr_organizations(id) ON DELETE CASCADE,
-  name text NOT NULL,
-  description text NOT NULL DEFAULT '',
-  status text NOT NULL DEFAULT 'active',
-  created_by uuid REFERENCES auth.users(id) ON DELETE SET NULL,
-  created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now(),
-  CONSTRAINT cr_projects_name_check CHECK (char_length(btrim(name)) BETWEEN 1 AND 140),
-  CONSTRAINT cr_projects_description_check CHECK (char_length(description) <= 3000),
-  CONSTRAINT cr_projects_status_check CHECK (status = ANY (ARRAY['active','archived'])),
-  CONSTRAINT cr_projects_id_organization_id_key UNIQUE (id,organization_id)
+create table public.cr_projects (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references public.cr_organizations(id) on delete cascade,
+  name text not null check (char_length(trim(name)) between 1 and 140),
+  description text not null default '' check (char_length(description) <= 3000),
+  status text not null default 'active' check (status in ('active','archived')),
+  created_by uuid references auth.users(id) on delete set null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (id, organization_id)
 );
 
-CREATE TABLE public.cr_commitments (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  organization_id uuid NOT NULL REFERENCES public.cr_organizations(id) ON DELETE CASCADE,
+create table public.cr_commitments (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references public.cr_organizations(id) on delete cascade,
   project_id uuid,
-  title text NOT NULL,
-  details text NOT NULL DEFAULT '',
-  counterparty text NOT NULL DEFAULT '',
-  owner_name text NOT NULL DEFAULT '',
+  title text not null check (char_length(trim(title)) between 2 and 240),
+  details text not null default '' check (char_length(details) <= 10000),
+  counterparty text not null default '' check (char_length(counterparty) <= 180),
+  owner_name text not null default '' check (char_length(owner_name) <= 180),
   due_date date,
-  status text NOT NULL DEFAULT 'open',
-  priority text NOT NULL DEFAULT 'normal',
-  confidence text NOT NULL DEFAULT 'medium',
-  source_type text NOT NULL DEFAULT 'manual',
-  source_excerpt text NOT NULL DEFAULT '',
-  source_url text NOT NULL DEFAULT '',
-  created_by uuid REFERENCES auth.users(id) ON DELETE SET NULL,
-  created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now(),
+  status text not null default 'open' check (status in ('open','in_progress','blocked','done','cancelled')),
+  priority text not null default 'normal' check (priority in ('low','normal','high','urgent')),
+  confidence text not null default 'medium' check (confidence in ('low','medium','high')),
+  source_type text not null default 'manual' check (source_type in ('manual','chat','email','meeting','document','other')),
+  source_excerpt text not null default '' check (char_length(source_excerpt) <= 12000),
+  source_url text not null default '' check (char_length(source_url) <= 2000),
+  created_by uuid references auth.users(id) on delete set null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
   completed_at timestamptz,
-  CONSTRAINT cr_commitments_title_check CHECK (char_length(btrim(title)) BETWEEN 2 AND 240),
-  CONSTRAINT cr_commitments_details_check CHECK (char_length(details) <= 10000),
-  CONSTRAINT cr_commitments_counterparty_check CHECK (char_length(counterparty) <= 180),
-  CONSTRAINT cr_commitments_owner_name_check CHECK (char_length(owner_name) <= 180),
-  CONSTRAINT cr_commitments_status_check CHECK (status = ANY (ARRAY['open','in_progress','blocked','done','cancelled'])),
-  CONSTRAINT cr_commitments_priority_check CHECK (priority = ANY (ARRAY['low','normal','high','urgent'])),
-  CONSTRAINT cr_commitments_confidence_check CHECK (confidence = ANY (ARRAY['low','medium','high'])),
-  CONSTRAINT cr_commitments_source_type_check CHECK (source_type = ANY (ARRAY['manual','chat','email','meeting','document','other'])),
-  CONSTRAINT cr_commitments_source_excerpt_check CHECK (char_length(source_excerpt) <= 12000),
-  CONSTRAINT cr_commitments_source_url_check CHECK (char_length(source_url) <= 2000),
-  CONSTRAINT cr_commitments_id_organization_id_key UNIQUE (id,organization_id),
-  CONSTRAINT cr_commitments_project_same_org FOREIGN KEY (project_id,organization_id)
-    REFERENCES public.cr_projects(id,organization_id) ON DELETE RESTRICT
+  unique (id, organization_id),
+  constraint cr_commitments_project_same_org
+    foreign key (project_id, organization_id)
+    references public.cr_projects(id, organization_id) on delete restrict
 );
 
-CREATE TABLE public.cr_evidence (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  organization_id uuid NOT NULL REFERENCES public.cr_organizations(id) ON DELETE CASCADE,
-  commitment_id uuid NOT NULL,
-  label text NOT NULL,
-  url text NOT NULL DEFAULT '',
-  note text NOT NULL DEFAULT '',
-  created_by uuid REFERENCES auth.users(id) ON DELETE SET NULL,
-  created_at timestamptz NOT NULL DEFAULT now(),
-  CONSTRAINT cr_evidence_label_check CHECK (char_length(btrim(label)) BETWEEN 1 AND 180),
-  CONSTRAINT cr_evidence_url_check CHECK (char_length(url) <= 2000),
-  CONSTRAINT cr_evidence_note_check CHECK (char_length(note) <= 12000),
-  CONSTRAINT cr_evidence_commitment_same_org FOREIGN KEY (commitment_id,organization_id)
-    REFERENCES public.cr_commitments(id,organization_id) ON DELETE CASCADE
+create table public.cr_evidence (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references public.cr_organizations(id) on delete cascade,
+  commitment_id uuid not null,
+  label text not null check (char_length(trim(label)) between 1 and 180),
+  url text not null default '' check (char_length(url) <= 2000),
+  note text not null default '' check (char_length(note) <= 12000),
+  created_by uuid references auth.users(id) on delete set null,
+  created_at timestamptz not null default now(),
+  constraint cr_evidence_commitment_same_org
+    foreign key (commitment_id, organization_id)
+    references public.cr_commitments(id, organization_id) on delete cascade
 );
 
-CREATE TABLE public.cr_dependencies (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  organization_id uuid NOT NULL REFERENCES public.cr_organizations(id) ON DELETE CASCADE,
-  commitment_id uuid NOT NULL,
-  depends_on_commitment_id uuid NOT NULL,
-  created_by uuid REFERENCES auth.users(id) ON DELETE SET NULL,
-  created_at timestamptz NOT NULL DEFAULT now(),
-  CONSTRAINT cr_dependencies_not_self CHECK (commitment_id <> depends_on_commitment_id),
-  CONSTRAINT cr_dependencies_unique UNIQUE (commitment_id,depends_on_commitment_id),
-  CONSTRAINT cr_dependencies_commitment_same_org FOREIGN KEY (commitment_id,organization_id)
-    REFERENCES public.cr_commitments(id,organization_id) ON DELETE CASCADE,
-  CONSTRAINT cr_dependencies_parent_same_org FOREIGN KEY (depends_on_commitment_id,organization_id)
-    REFERENCES public.cr_commitments(id,organization_id) ON DELETE CASCADE
+create table public.cr_dependencies (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references public.cr_organizations(id) on delete cascade,
+  commitment_id uuid not null,
+  depends_on_commitment_id uuid not null,
+  created_by uuid references auth.users(id) on delete set null,
+  created_at timestamptz not null default now(),
+  constraint cr_dependencies_not_self check (commitment_id <> depends_on_commitment_id),
+  constraint cr_dependencies_unique unique (commitment_id, depends_on_commitment_id),
+  constraint cr_dependencies_commitment_same_org
+    foreign key (commitment_id, organization_id)
+    references public.cr_commitments(id, organization_id) on delete cascade,
+  constraint cr_dependencies_parent_same_org
+    foreign key (depends_on_commitment_id, organization_id)
+    references public.cr_commitments(id, organization_id) on delete cascade
 );
 
-CREATE TABLE public.cr_reviews (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  organization_id uuid NOT NULL REFERENCES public.cr_organizations(id) ON DELETE CASCADE,
-  commitment_id uuid NOT NULL,
-  status text NOT NULL DEFAULT 'pending',
-  created_by uuid NOT NULL REFERENCES auth.users(id) ON DELETE RESTRICT,
-  reviewed_by uuid REFERENCES auth.users(id) ON DELETE SET NULL,
-  decision_note text NOT NULL DEFAULT '',
-  created_at timestamptz NOT NULL DEFAULT now(),
+create table public.cr_reviews (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references public.cr_organizations(id) on delete cascade,
+  commitment_id uuid not null,
+  status text not null default 'pending' check (status in ('pending','approved','rejected')),
+  created_by uuid not null references auth.users(id) on delete restrict,
+  reviewed_by uuid references auth.users(id) on delete set null,
+  decision_note text not null default '' check (char_length(decision_note) <= 3000),
+  created_at timestamptz not null default now(),
   reviewed_at timestamptz,
-  CONSTRAINT cr_reviews_status_check CHECK (status = ANY (ARRAY['pending','approved','rejected'])),
-  CONSTRAINT cr_reviews_decision_note_check CHECK (char_length(decision_note) <= 3000),
-  CONSTRAINT cr_reviews_commitment_same_org FOREIGN KEY (commitment_id,organization_id)
-    REFERENCES public.cr_commitments(id,organization_id) ON DELETE CASCADE
+  constraint cr_reviews_commitment_same_org
+    foreign key (commitment_id, organization_id)
+    references public.cr_commitments(id, organization_id) on delete cascade
 );
 
-CREATE TABLE public.cr_audit_events (
-  id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-  organization_id uuid NOT NULL REFERENCES public.cr_organizations(id) ON DELETE CASCADE,
-  actor_id uuid REFERENCES auth.users(id) ON DELETE SET NULL,
-  entity_type text NOT NULL,
-  entity_id uuid NOT NULL,
-  action text NOT NULL,
-  metadata jsonb NOT NULL DEFAULT '{}'::jsonb,
-  created_at timestamptz NOT NULL DEFAULT now(),
-  CONSTRAINT cr_audit_events_action_check CHECK (action = ANY (ARRAY['insert','update','delete']))
+create unique index cr_reviews_one_pending_per_commitment
+  on public.cr_reviews (commitment_id) where status = 'pending';
+create index cr_memberships_user_id_idx on public.cr_memberships (user_id);
+create index cr_projects_org_status_idx on public.cr_projects (organization_id, status, created_at desc);
+create index cr_commitments_org_due_idx on public.cr_commitments (organization_id, due_date);
+create index cr_commitments_org_status_idx on public.cr_commitments (organization_id, status, priority);
+create index cr_evidence_commitment_idx on public.cr_evidence (commitment_id, created_at desc);
+create index cr_dependencies_org_idx on public.cr_dependencies (organization_id, commitment_id);
+create index cr_reviews_org_status_idx on public.cr_reviews (organization_id, status, created_at desc);
+
+create table public.cr_audit_events (
+  id bigint generated always as identity primary key,
+  organization_id uuid not null references public.cr_organizations(id) on delete cascade,
+  actor_id uuid references auth.users(id) on delete set null,
+  entity_type text not null,
+  entity_id uuid not null,
+  action text not null check (action in ('insert','update','delete')),
+  metadata jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now()
 );
+create index cr_audit_events_org_time_idx on public.cr_audit_events (organization_id, created_at desc);
 
-CREATE INDEX cr_memberships_user_id_idx ON public.cr_memberships(user_id);
-CREATE INDEX cr_projects_org_status_idx ON public.cr_projects(organization_id,status,created_at DESC);
-CREATE INDEX cr_commitments_org_due_idx ON public.cr_commitments(organization_id,due_date);
-CREATE INDEX cr_commitments_org_status_idx ON public.cr_commitments(organization_id,status,priority);
-CREATE INDEX cr_evidence_commitment_idx ON public.cr_evidence(commitment_id,created_at DESC);
-CREATE INDEX cr_dependencies_org_idx ON public.cr_dependencies(organization_id,commitment_id);
-CREATE INDEX cr_reviews_org_status_idx ON public.cr_reviews(organization_id,status,created_at DESC);
-CREATE UNIQUE INDEX cr_reviews_one_pending_per_commitment ON public.cr_reviews(commitment_id) WHERE status = 'pending';
-CREATE INDEX cr_audit_events_org_time_idx ON public.cr_audit_events(organization_id,created_at DESC);
+create or replace function public.cr_set_updated_at()
+returns trigger language plpgsql set search_path = public, pg_temp as $$
+begin
+  new.updated_at := now();
+  return new;
+end;
+$$;
 
-CREATE OR REPLACE FUNCTION public.cr_is_member(p_organization_id uuid)
-RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public, pg_temp
-AS $function$
-  SELECT EXISTS (SELECT 1 FROM public.cr_memberships m
-    WHERE m.organization_id = p_organization_id AND m.user_id = (SELECT auth.uid()));
-$function$;
+create trigger cr_organizations_set_updated_at before update on public.cr_organizations
+for each row execute function public.cr_set_updated_at();
+create trigger cr_projects_set_updated_at before update on public.cr_projects
+for each row execute function public.cr_set_updated_at();
+create trigger cr_commitments_set_updated_at before update on public.cr_commitments
+for each row execute function public.cr_set_updated_at();
 
-CREATE OR REPLACE FUNCTION public.cr_can_edit(p_organization_id uuid)
-RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public, pg_temp
-AS $function$
-  SELECT EXISTS (SELECT 1 FROM public.cr_memberships m
-    WHERE m.organization_id = p_organization_id AND m.user_id = (SELECT auth.uid())
-      AND m.role IN ('owner','admin','editor'));
-$function$;
+create or replace function public.cr_is_member(p_organization_id uuid)
+returns boolean language sql stable security definer set search_path = public, pg_temp as $$
+  select exists (
+    select 1 from public.cr_memberships m
+    where m.organization_id = p_organization_id
+      and m.user_id = (select auth.uid())
+  );
+$$;
 
-CREATE OR REPLACE FUNCTION public.cr_can_manage(p_organization_id uuid)
-RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public, pg_temp
-AS $function$
-  SELECT EXISTS (SELECT 1 FROM public.cr_memberships m
-    WHERE m.organization_id = p_organization_id AND m.user_id = (SELECT auth.uid())
-      AND m.role IN ('owner','admin'));
-$function$;
+create or replace function public.cr_can_edit(p_organization_id uuid)
+returns boolean language sql stable security definer set search_path = public, pg_temp as $$
+  select exists (
+    select 1 from public.cr_memberships m
+    where m.organization_id = p_organization_id
+      and m.user_id = (select auth.uid())
+      and m.role in ('owner','admin','editor')
+  );
+$$;
 
-CREATE OR REPLACE FUNCTION public.cr_create_organization(p_name text)
-RETURNS uuid LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp
-AS $function$
-DECLARE
+create or replace function public.cr_can_manage(p_organization_id uuid)
+returns boolean language sql stable security definer set search_path = public, pg_temp as $$
+  select exists (
+    select 1 from public.cr_memberships m
+    where m.organization_id = p_organization_id
+      and m.user_id = (select auth.uid())
+      and m.role in ('owner','admin')
+  );
+$$;
+
+create or replace function public.cr_create_organization(p_name text)
+returns uuid language plpgsql security definer set search_path = public, pg_temp as $$
+declare
   v_user_id uuid := auth.uid();
   v_organization_id uuid;
   v_name text := trim(coalesce(p_name, ''));
-BEGIN
-  IF v_user_id IS NULL THEN
-    RAISE EXCEPTION 'Authentication is required' USING ERRCODE = '42501';
-  END IF;
-  IF char_length(v_name) < 2 OR char_length(v_name) > 120 THEN
-    RAISE EXCEPTION 'Organization name must be between 2 and 120 characters' USING ERRCODE = '22023';
-  END IF;
-  INSERT INTO public.cr_organizations (name,owner_id) VALUES (v_name,v_user_id)
-    RETURNING id INTO v_organization_id;
-  INSERT INTO public.cr_memberships (organization_id,user_id,role)
-    VALUES (v_organization_id,v_user_id,'owner');
-  RETURN v_organization_id;
-END;
-$function$;
+begin
+  if v_user_id is null then
+    raise exception 'Authentication is required' using errcode = '42501';
+  end if;
+  if char_length(v_name) < 2 or char_length(v_name) > 120 then
+    raise exception 'Organization name must be between 2 and 120 characters' using errcode = '22023';
+  end if;
+  insert into public.cr_organizations (name, owner_id) values (v_name, v_user_id)
+  returning id into v_organization_id;
+  insert into public.cr_memberships (organization_id, user_id, role)
+  values (v_organization_id, v_user_id, 'owner');
+  return v_organization_id;
+end;
+$$;
 
-CREATE OR REPLACE FUNCTION public.cr_log_commitment_change()
-RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp
-AS $function$
-DECLARE
+create or replace function public.cr_log_commitment_change()
+returns trigger language plpgsql security definer set search_path = public, pg_temp as $$
+declare
   v_org_id uuid;
   v_entity_id uuid;
   v_status text;
-BEGIN
-  IF TG_OP = 'DELETE' THEN
-    v_org_id := OLD.organization_id; v_entity_id := OLD.id; v_status := OLD.status;
-  ELSE
-    v_org_id := NEW.organization_id; v_entity_id := NEW.id; v_status := NEW.status;
-  END IF;
-  INSERT INTO public.cr_audit_events (organization_id,actor_id,entity_type,entity_id,action,metadata)
-  VALUES (v_org_id,(SELECT auth.uid()),'commitment',v_entity_id,lower(TG_OP),
-    jsonb_build_object('status',v_status));
-  IF TG_OP = 'DELETE' THEN RETURN OLD; ELSE RETURN NEW; END IF;
-END;
-$function$;
+begin
+  if tg_op = 'DELETE' then
+    v_org_id := old.organization_id;
+    v_entity_id := old.id;
+    v_status := old.status;
+  else
+    v_org_id := new.organization_id;
+    v_entity_id := new.id;
+    v_status := new.status;
+  end if;
 
-CREATE OR REPLACE FUNCTION public.cr_set_updated_at()
-RETURNS trigger LANGUAGE plpgsql SET search_path = public, pg_temp
-AS $function$
-BEGIN
-  NEW.updated_at := now();
-  RETURN NEW;
-END;
-$function$;
+  insert into public.cr_audit_events
+    (organization_id, actor_id, entity_type, entity_id, action, metadata)
+  values (
+    v_org_id, (select auth.uid()), 'commitment', v_entity_id, lower(tg_op),
+    jsonb_build_object('status', v_status)
+  );
 
-CREATE TRIGGER cr_commitments_audit AFTER INSERT OR UPDATE OR DELETE ON public.cr_commitments
-  FOR EACH ROW EXECUTE FUNCTION public.cr_log_commitment_change();
-CREATE TRIGGER cr_commitments_set_updated_at BEFORE UPDATE ON public.cr_commitments
-  FOR EACH ROW EXECUTE FUNCTION public.cr_set_updated_at();
-CREATE TRIGGER cr_organizations_set_updated_at BEFORE UPDATE ON public.cr_organizations
-  FOR EACH ROW EXECUTE FUNCTION public.cr_set_updated_at();
-CREATE TRIGGER cr_projects_set_updated_at BEFORE UPDATE ON public.cr_projects
-  FOR EACH ROW EXECUTE FUNCTION public.cr_set_updated_at();
+  if tg_op = 'DELETE' then return old; else return new; end if;
+end;
+$$;
 
-ALTER TABLE public.cr_organizations ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.cr_memberships ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.cr_projects ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.cr_commitments ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.cr_evidence ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.cr_dependencies ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.cr_reviews ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.cr_audit_events ENABLE ROW LEVEL SECURITY;
+create trigger cr_commitments_audit
+after insert or update or delete on public.cr_commitments
+for each row execute function public.cr_log_commitment_change();
 
-CREATE POLICY cr_organizations_select ON public.cr_organizations FOR SELECT TO authenticated USING (public.cr_is_member(id));
-CREATE POLICY cr_organizations_update ON public.cr_organizations FOR UPDATE TO authenticated USING (public.cr_can_manage(id)) WITH CHECK (public.cr_can_manage(id));
-CREATE POLICY cr_memberships_select ON public.cr_memberships FOR SELECT TO authenticated USING (public.cr_is_member(organization_id));
-CREATE POLICY cr_projects_select ON public.cr_projects FOR SELECT TO authenticated USING (public.cr_is_member(organization_id));
-CREATE POLICY cr_projects_insert ON public.cr_projects FOR INSERT TO authenticated WITH CHECK (public.cr_can_edit(organization_id) AND created_by = (SELECT auth.uid()));
-CREATE POLICY cr_projects_update ON public.cr_projects FOR UPDATE TO authenticated USING (public.cr_can_edit(organization_id)) WITH CHECK (public.cr_can_edit(organization_id));
-CREATE POLICY cr_projects_delete ON public.cr_projects FOR DELETE TO authenticated USING (public.cr_can_edit(organization_id));
-CREATE POLICY cr_commitments_select ON public.cr_commitments FOR SELECT TO authenticated USING (public.cr_is_member(organization_id));
-CREATE POLICY cr_commitments_insert ON public.cr_commitments FOR INSERT TO authenticated WITH CHECK (public.cr_can_edit(organization_id) AND created_by = (SELECT auth.uid()));
-CREATE POLICY cr_commitments_update ON public.cr_commitments FOR UPDATE TO authenticated USING (public.cr_can_edit(organization_id)) WITH CHECK (public.cr_can_edit(organization_id));
-CREATE POLICY cr_commitments_delete ON public.cr_commitments FOR DELETE TO authenticated USING (public.cr_can_edit(organization_id));
-CREATE POLICY cr_evidence_select ON public.cr_evidence FOR SELECT TO authenticated USING (public.cr_is_member(organization_id));
-CREATE POLICY cr_evidence_insert ON public.cr_evidence FOR INSERT TO authenticated WITH CHECK (public.cr_can_edit(organization_id) AND created_by = (SELECT auth.uid()));
-CREATE POLICY cr_evidence_update ON public.cr_evidence FOR UPDATE TO authenticated USING (public.cr_can_edit(organization_id)) WITH CHECK (public.cr_can_edit(organization_id));
-CREATE POLICY cr_evidence_delete ON public.cr_evidence FOR DELETE TO authenticated USING (public.cr_can_edit(organization_id));
-CREATE POLICY cr_dependencies_select ON public.cr_dependencies FOR SELECT TO authenticated USING (public.cr_is_member(organization_id));
-CREATE POLICY cr_dependencies_insert ON public.cr_dependencies FOR INSERT TO authenticated WITH CHECK (public.cr_can_edit(organization_id) AND created_by = (SELECT auth.uid()));
-CREATE POLICY cr_dependencies_delete ON public.cr_dependencies FOR DELETE TO authenticated USING (public.cr_can_edit(organization_id));
-CREATE POLICY cr_reviews_select ON public.cr_reviews FOR SELECT TO authenticated USING (public.cr_is_member(organization_id));
-CREATE POLICY cr_reviews_insert ON public.cr_reviews FOR INSERT TO authenticated WITH CHECK (public.cr_can_edit(organization_id) AND created_by = (SELECT auth.uid()) AND status = 'pending');
-CREATE POLICY cr_reviews_update ON public.cr_reviews FOR UPDATE TO authenticated
-  USING (public.cr_can_edit(organization_id) AND created_by <> (SELECT auth.uid()) AND status = 'pending')
-  WITH CHECK (public.cr_can_edit(organization_id) AND created_by <> (SELECT auth.uid()) AND reviewed_by = (SELECT auth.uid()) AND status IN ('approved','rejected'));
-CREATE POLICY cr_audit_events_select ON public.cr_audit_events FOR SELECT TO authenticated USING (public.cr_is_member(organization_id));
+alter table public.cr_organizations enable row level security;
+alter table public.cr_memberships enable row level security;
+alter table public.cr_projects enable row level security;
+alter table public.cr_commitments enable row level security;
+alter table public.cr_evidence enable row level security;
+alter table public.cr_dependencies enable row level security;
+alter table public.cr_reviews enable row level security;
+alter table public.cr_audit_events enable row level security;
 
-REVOKE ALL ON FUNCTION public.cr_is_member(uuid) FROM PUBLIC, anon;
-REVOKE ALL ON FUNCTION public.cr_can_edit(uuid) FROM PUBLIC, anon;
-REVOKE ALL ON FUNCTION public.cr_can_manage(uuid) FROM PUBLIC, anon;
-REVOKE ALL ON FUNCTION public.cr_create_organization(text) FROM PUBLIC, anon;
-REVOKE ALL ON FUNCTION public.cr_log_commitment_change() FROM PUBLIC, anon, authenticated;
-REVOKE ALL ON FUNCTION public.cr_set_updated_at() FROM PUBLIC, anon, authenticated;
-GRANT EXECUTE ON FUNCTION public.cr_is_member(uuid) TO authenticated;
-GRANT EXECUTE ON FUNCTION public.cr_can_edit(uuid) TO authenticated;
-GRANT EXECUTE ON FUNCTION public.cr_can_manage(uuid) TO authenticated;
-GRANT EXECUTE ON FUNCTION public.cr_create_organization(text) TO authenticated;
+-- Organizations: access only through verified membership; only owners/admins can rename.
+create policy cr_organizations_select on public.cr_organizations
+for select to authenticated using (public.cr_is_member(id));
+create policy cr_organizations_update on public.cr_organizations
+for update to authenticated using (public.cr_can_manage(id))
+with check (public.cr_can_manage(id));
 
-GRANT SELECT, UPDATE ON public.cr_organizations TO authenticated;
-GRANT SELECT ON public.cr_memberships TO authenticated;
-GRANT SELECT, INSERT, UPDATE, DELETE ON public.cr_projects TO authenticated;
-GRANT SELECT, INSERT, UPDATE, DELETE ON public.cr_commitments TO authenticated;
-GRANT SELECT, INSERT, UPDATE, DELETE ON public.cr_evidence TO authenticated;
-GRANT SELECT, INSERT, DELETE ON public.cr_dependencies TO authenticated;
-GRANT SELECT, INSERT, UPDATE ON public.cr_reviews TO authenticated;
-GRANT SELECT ON public.cr_audit_events TO authenticated;
+create policy cr_memberships_select on public.cr_memberships
+for select to authenticated using (public.cr_is_member(organization_id));
 
-COMMIT;
+create policy cr_projects_select on public.cr_projects
+for select to authenticated using (public.cr_is_member(organization_id));
+create policy cr_projects_insert on public.cr_projects
+for insert to authenticated with check (public.cr_can_edit(organization_id) and created_by = (select auth.uid()));
+create policy cr_projects_update on public.cr_projects
+for update to authenticated using (public.cr_can_edit(organization_id))
+with check (public.cr_can_edit(organization_id));
+create policy cr_projects_delete on public.cr_projects
+for delete to authenticated using (public.cr_can_edit(organization_id));
+
+create policy cr_commitments_select on public.cr_commitments
+for select to authenticated using (public.cr_is_member(organization_id));
+create policy cr_commitments_insert on public.cr_commitments
+for insert to authenticated with check (public.cr_can_edit(organization_id) and created_by = (select auth.uid()));
+create policy cr_commitments_update on public.cr_commitments
+for update to authenticated using (public.cr_can_edit(organization_id))
+with check (public.cr_can_edit(organization_id));
+create policy cr_commitments_delete on public.cr_commitments
+for delete to authenticated using (public.cr_can_edit(organization_id));
+
+create policy cr_evidence_select on public.cr_evidence
+for select to authenticated using (public.cr_is_member(organization_id));
+create policy cr_evidence_insert on public.cr_evidence
+for insert to authenticated with check (public.cr_can_edit(organization_id) and created_by = (select auth.uid()));
+create policy cr_evidence_update on public.cr_evidence
+for update to authenticated using (public.cr_can_edit(organization_id))
+with check (public.cr_can_edit(organization_id));
+create policy cr_evidence_delete on public.cr_evidence
+for delete to authenticated using (public.cr_can_edit(organization_id));
+
+create policy cr_dependencies_select on public.cr_dependencies
+for select to authenticated using (public.cr_is_member(organization_id));
+create policy cr_dependencies_insert on public.cr_dependencies
+for insert to authenticated with check (public.cr_can_edit(organization_id) and created_by = (select auth.uid()));
+create policy cr_dependencies_delete on public.cr_dependencies
+for delete to authenticated using (public.cr_can_edit(organization_id));
+
+create policy cr_reviews_select on public.cr_reviews
+for select to authenticated using (public.cr_is_member(organization_id));
+create policy cr_reviews_insert on public.cr_reviews
+for insert to authenticated with check (public.cr_can_edit(organization_id) and created_by = (select auth.uid()) and status = 'pending');
+create policy cr_reviews_update on public.cr_reviews
+for update to authenticated
+using (public.cr_can_edit(organization_id) and created_by <> (select auth.uid()) and status = 'pending')
+with check (
+  public.cr_can_edit(organization_id)
+  and created_by <> (select auth.uid())
+  and reviewed_by = (select auth.uid())
+  and status in ('approved','rejected')
+);
+
+create policy cr_audit_events_select on public.cr_audit_events
+for select to authenticated using (public.cr_is_member(organization_id));
+
+-- Data API access is explicit; RLS remains the row-level boundary. No access for anon.
+grant usage on schema public to authenticated;
+revoke all on public.cr_organizations, public.cr_memberships, public.cr_projects,
+  public.cr_commitments, public.cr_evidence, public.cr_dependencies, public.cr_reviews,
+  public.cr_audit_events from anon, authenticated;
+
+grant select, update on public.cr_organizations to authenticated;
+grant select on public.cr_memberships to authenticated;
+grant select, insert, update, delete on public.cr_projects to authenticated;
+grant select, insert, update, delete on public.cr_commitments to authenticated;
+grant select, insert, update, delete on public.cr_evidence to authenticated;
+grant select, insert, delete on public.cr_dependencies to authenticated;
+grant select, insert, update on public.cr_reviews to authenticated;
+grant select on public.cr_audit_events to authenticated;
+
+revoke all on function public.cr_is_member(uuid) from public, anon;
+revoke all on function public.cr_can_edit(uuid) from public, anon;
+revoke all on function public.cr_can_manage(uuid) from public, anon;
+revoke all on function public.cr_create_organization(text) from public, anon;
+revoke all on function public.cr_set_updated_at() from public, anon, authenticated;
+revoke all on function public.cr_log_commitment_change() from public, anon, authenticated;
+grant execute on function public.cr_is_member(uuid) to authenticated;
+grant execute on function public.cr_can_edit(uuid) to authenticated;
+grant execute on function public.cr_can_manage(uuid) to authenticated;
+grant execute on function public.cr_create_organization(text) to authenticated;
+
+commit;
