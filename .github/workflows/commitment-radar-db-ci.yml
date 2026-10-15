@@ -86,9 +86,10 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install Supabase CLI
+        id: setup-supabase-cli
         uses: supabase/setup-cli@v1
         with:
-          version: latest
+          version: 2.120.0
 
       - name: Start isolated local Supabase stack
         run: supabase start --workdir commitment-radar
@@ -114,7 +115,7 @@ jobs:
         run: node commitment-radar/supabase/tests/auth_rls_integration.mjs
 
       - name: Stop isolated Supabase stack
-        if: always()
+        if: always() && steps.setup-supabase-cli.outcome == 'success'
         run: supabase stop --workdir commitment-radar
 
   supabase-auth-integration:
