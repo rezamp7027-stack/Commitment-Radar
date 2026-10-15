@@ -4,6 +4,7 @@
 **Status:** Implementation-ready specification baseline; final Figma canvas synchronization remains open  
 **Repository:** https://github.com/rezamp7027-stack/Commitment-Radar  
 **Existing Figma file:** https://www.figma.com/design/CueLiOMpV0m7OY7BEYEFcs  
+**Canonical editable Canva Doc:** https://www.canva.com/d/Gx2q99U6TKNfShP (edit: https://www.canva.com/d/-3ugm7vZ-SO2F-O)  
 **Scope:** Product UX, design contract, schema alignment, accessibility requirements, and Phase 4 handoff. No frontend implementation, production schema write, or deployment is included.
 
 ## 1. Executive decision
@@ -12,7 +13,7 @@ Phase 3 establishes a coherent UI contract for the first usable Commitment Radar
 
 The chosen first vertical slice is **authenticated workspace shell → authorized commitments list → commitment detail**. After that slice passes its integration gate, add create/edit, project management, review workflow, and secondary record views.
 
-**Important delivery boundary:** the existing Figma artifact was not changed in this pass because the connected Figma service reported its tool-call limit. A new Canva design could not be generated because Canva reported its design-credit quota was exhausted. The specification and acceptance contract below are committed independently in GitHub; visual synchronization of the existing Figma file and correction of the existing Canva handoff remain explicit artifact follow-ups rather than claimed completed actions.
+**Important delivery boundary:** the existing Figma artifact was not changed in this pass because the connected Figma service reported its tool-call limit. Canva reported its AI design-credit quota was exhausted, so a new AI-generated slide deck could not be created. An editable Canva Doc was imported successfully from the corrected, versioned GitHub source: https://www.canva.com/d/Gx2q99U6TKNfShP. The specification and acceptance contract below are committed independently in GitHub; visual synchronization of the existing Figma file and correction of the old Canva slide handoff remain explicit follow-ups rather than claimed completed actions.
 
 ## 2. Verified baseline and constraints
 
@@ -312,7 +313,8 @@ Related planning templates:
 | Live production schema or row changes | Not performed | Intentionally out of scope |
 | Hosted disposable Supabase parity test | Not run | Requires dedicated isolated project and credentials |
 | Figma canvas polish/sync in this pass | Blocked | Figma service reported its tool-call limit; apply this handoff to the existing design when access returns |
-| New Canva final presentation | Not created | Canva reported design-credit quota exceeded; existing Canva UI handoff content contains schema mismatches and should not be treated as canonical until corrected |
+| Canonical editable Canva Doc | Imported from the corrected handoff source | View: https://www.canva.com/d/Gx2q99U6TKNfShP · Edit: https://www.canva.com/d/-3ugm7vZ-SO2F-O |
+| New AI-generated Canva slide deck | Not created | Canva reported design-credit quota exceeded; the older Canva UI handoff contains schema mismatches and should not be treated as canonical |
 | Frontend implementation / deployment | Not started in Phase 3 | Phase 4 work |
 
 ## 12. Next concrete action
