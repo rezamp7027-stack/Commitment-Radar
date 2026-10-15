@@ -104,9 +104,19 @@ test('browser smoke: offline navigation falls back to the privacy-safe offline p
   try {
     await env.page.goto(env.url, { waitUntil: 'networkidle' });
     await env.page.evaluate(async () => { await navigator.serviceWorker.ready; });
+    await env.page.waitForFunction(() => Boolean(navigator.serviceWorker.controller), null, { timeout: 10000 });
+    const shell = await env.page.evaluate(async () => {
+      const cache = await caches.open('commitment-radar-shell-v2');
+      const offlineUrl = new URL('./offline.html', location.href).toString();
+      return {
+        cachedOfflinePage: Boolean(await cache.match(offlineUrl)),
+        cachedIcon: Boolean(await cache.match(new URL('./icons/icon-192.png', location.href).toString()))
+      };
+    });
+    assert.deepEqual(shell, { cachedOfflinePage: true, cachedIcon: true });
     await env.context.setOffline(true);
-    await env.page.reload({ waitUntil: 'domcontentloaded' });
-    await env.page.getByRole('heading', { name: "You're offline." }).waitFor();
+    await env.page.goto(env.url + '/offline-probe', { waitUntil: 'domcontentloaded', timeout: 10000 });
+    await env.page.getByRole('heading', { name: "You're offline." }).waitFor({ timeout: 5000 });
     assert.match(await env.page.locator('body').innerText(), /private workspace data is not stored/i);
   } finally {
     await env.context.setOffline(false).catch(() => {});
