@@ -101,7 +101,7 @@ function render(){
   for(const x of rows){
     const item=safeEl('article','item');
     const cb=safeEl('input','check');
-    cb.type='checkbox';cb.checked=isDone(x);cb.disabled=isCancelled(x);
+    cb.type='checkbox';cb.checked=isDone(x);cb.disabled=isCancelled(x)||!canEdit();
     cb.setAttribute('aria-label',isCancelled(x)?'Cancelled commitment: '+x.title:'Mark '+x.title+' completed');
     cb.addEventListener('change',()=>updateStatus(x,cb.checked));
 
@@ -110,6 +110,9 @@ function render(){
     if(x.details)main.append(title,safeEl('div','hint',x.details.slice(0,180)));
     else main.appendChild(title);
     if(x.source_excerpt)main.appendChild(safeEl('div','hint','Source · '+x.source_excerpt.slice(0,140)));
+    if(x.source_url){
+      try{const source=new URL(x.source_url);if(['https:','http:'].includes(source.protocol)){const link=safeEl('a','module-link',source.hostname+source.pathname);link.href=source.href;link.target='_blank';link.rel='noopener noreferrer';main.appendChild(link)}}catch{}
+    }
 
     const meta=safeEl('div','meta');
     if(x.owner_name)meta.appendChild(safeEl('span','pill','Owner · '+x.owner_name));
@@ -120,13 +123,16 @@ function render(){
     meta.appendChild(safeEl('span','pill'+(isOverdue(x)?' overdue':(!isDone(x)&&!isCancelled(x)&&x.due_date===today()?' today':'')),isOverdue(x)?'Overdue · '+fmt(x.due_date):'Due · '+fmt(x.due_date)));
     main.appendChild(meta);
 
-    const actions=safeEl('div','item-actions');
-    const edit=safeEl('button','secondary','Edit');
-    edit.type='button';edit.setAttribute('aria-label','Edit '+x.title);edit.addEventListener('click',()=>editCommitment(x));
-    const del=safeEl('button','delete','×');
-    del.type='button';del.setAttribute('aria-label','Delete '+x.title);del.addEventListener('click',()=>deleteCommitment(x));
-    actions.append(edit,del);
-    item.append(cb,main,actions);
+    item.append(cb,main);
+    if(canEdit()){
+      const actions=safeEl('div','item-actions');
+      const edit=safeEl('button','secondary','Edit');
+      edit.type='button';edit.setAttribute('aria-label','Edit '+x.title);edit.addEventListener('click',()=>editCommitment(x));
+      const del=safeEl('button','delete','×');
+      del.type='button';del.setAttribute('aria-label','Delete '+x.title);del.addEventListener('click',()=>deleteCommitment(x));
+      actions.append(edit,del);
+      item.appendChild(actions);
+    }
     root.appendChild(item);
   }
 }
@@ -284,8 +290,8 @@ async function deleteDependency(dependency){
   }catch(e){show('dependencyStatus','Could not remove dependency: '+errText(e),'error')}
 }
 
-async function updateStatus(x,done){setBusy(true);try{const status=done?'done':'open';const now=new Date().toISOString();const patch={status,completed_at:done?now:null,updated_at:now};const {error}=await client.from('cr_commitments').update(patch).eq('id',x.id).eq('organization_id',orgId);if(error)throw error;await loadCommitments()}catch(e){show('dataStatus','Could not update commitment: '+errText(e),'error');await loadCommitments()}finally{setBusy(false)}}
-async function deleteCommitment(x){if(!confirm('Delete this commitment permanently?'))return;setBusy(true);try{const {error}=await client.from('cr_commitments').delete().eq('id',x.id).eq('organization_id',orgId);if(error)throw error;await loadCommitments()}catch(e){show('dataStatus','Could not delete commitment: '+errText(e),'error')}finally{setBusy(false)}}
+async function updateStatus(x,done){if(!canEdit())return;setBusy(true);try{const status=done?'done':'open';const now=new Date().toISOString();const patch={status,completed_at:done?now:null,updated_at:now};const {error}=await client.from('cr_commitments').update(patch).eq('id',x.id).eq('organization_id',orgId);if(error)throw error;await loadCommitments()}catch(e){show('dataStatus','Could not update commitment: '+errText(e),'error');await loadCommitments()}finally{setBusy(false)}}
+async function deleteCommitment(x){if(!canEdit()||!confirm('Delete this commitment permanently?'))return;setBusy(true);try{const {error}=await client.from('cr_commitments').delete().eq('id',x.id).eq('organization_id',orgId);if(error)throw error;await loadCommitments()}catch(e){show('dataStatus','Could not delete commitment: '+errText(e),'error')}finally{setBusy(false)}}
 let editingCommitmentId=null;
 $('toggleForm').addEventListener('click',()=>{
   closeCommitForm();
@@ -304,6 +310,7 @@ function closeCommitForm(){
   hide('commitStatus');
 }
 function editCommitment(x){
+  if(!canEdit())return;
   editingCommitmentId=x.id;
   $('commitTitle').value=x.title||'';
   $('projectId').value=x.project_id||'';
@@ -327,6 +334,7 @@ $('cancelCommit').addEventListener('click',closeCommitForm);
 $('commitForm').addEventListener('submit',async e=>{
   e.preventDefault();
   if(!orgId){show('commitStatus','Create or select a workspace first.','error');return}
+  if(!canEdit()){show('commitStatus','You need an editor or higher role to change commitments.','error');return}
   const title=$('commitTitle').value.trim();
   if(title.length<2){show('commitStatus','Commitment title must contain at least 2 non-space characters.','error');return}
   const sourceUrl=$('sourceUrl').value.trim();
