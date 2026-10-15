@@ -137,12 +137,12 @@ async function visibleRows(user, path) {
   return data;
 }
 
-async function createProject(user, organizationId, name, shouldAllow) {
+async function createProject(user, organizationId, name, shouldAllow, createdBy = user.id) {
   const result = await request("/rest/v1/cr_projects?select=id,name,organization_id", {
     token: user.token,
     method: "POST",
     prefer: "return=representation",
-    body: { organization_id: organizationId, name, created_by: user.id },
+    body: { organization_id: organizationId, name, created_by: createdBy },
   });
   const created = result.ok && Array.isArray(result.data) && result.data.length > 0;
   if (shouldAllow) {
@@ -232,6 +232,23 @@ async function main() {
 
   await test("cross-tenant project writes are denied", async () => {
     await createProject(ownerA, orgB, "Cross-tenant write must fail " + runId, false);
+  });
+
+  await test("creator identity cannot be spoofed", async () => {
+    await createProject(ownerA, orgA, "Spoofed creator must fail " + runId, false, ownerB.id);
+  });
+
+  await test("admin cannot self-elevate membership role", async () => {
+    const result = await request("/rest/v1/cr_memberships?organization_id=eq." + orgA + "&user_id=eq." + adminA.id + "&select=role", {
+      token: adminA.token,
+      method: "PATCH",
+      prefer: "return=representation",
+      body: { role: "owner" },
+    });
+    const changed = result.ok && Array.isArray(result.data) && result.data.length > 0;
+    assert(!result.ok || !changed, "Admin unexpectedly changed their own membership role");
+    const rows = await visibleRows(adminA, "/rest/v1/cr_memberships?organization_id=eq." + orgA + "&user_id=eq." + adminA.id + "&select=role");
+    assert(rows.length === 1 && rows[0].role === "admin", "Membership role changed despite denied self-elevation");
   });
 
   await test("only owner/admin can update organization settings", async () => {
