@@ -1,7 +1,7 @@
 # Commitment Radar — Phase 3 Design Report
 
 **Date:** 2026-10-15  
-**Status:** Design draft created; awaiting product-owner review before frontend implementation  
+**Status:** Product design contract and Phase 4 engineering handoff finalized; visual synchronization into the existing Figma canvas remains open because the Figma connector reached its tool-call limit in this session  
 **Branch:** `main`  
 **Figma:** https://www.figma.com/design/CueLiOMpV0m7OY7BEYEFcs
 
@@ -21,7 +21,7 @@ Created a new editable Figma design file with six product screens and a design-s
 - **Design System page:** semantic color palette, typography, spacing/radius references, product rules, and five editable Figma components.
 - **Local variables:** 27 named tokens in the `Commitment Radar Tokens` collection.
 - **Typeface:** IBM Plex Sans (selected as a proposed product-design decision; no existing frontend source was found to establish an existing font standard).
-- **Canva:** Phase 3 handoff presentation generation was requested. The design link is not recorded as complete until a generated presentation can be verified.
+- **Canva:** An editable Canva Doc was created from the final handoff specification. The existing 13-page UI handoff presentation was inspected and contains schema inconsistencies; do not treat it as the canonical field contract until it is corrected. A new AI-generated slide deck was not created because Canva reported its design-credit quota was exhausted.
 
 ## Screen scope
 
@@ -69,14 +69,19 @@ The commitment form and detail view use fields observed in `cr_commitments`, inc
 - Dashboard and mobile dashboard screenshots were reviewed. The spacing-token swatch layout was corrected after visual inspection.
 - Supabase table and migration listing were read-only; all eight `cr_*` tables reported RLS enabled and zero rows at inspection time.
 - No frontend build, browser end-to-end test, accessibility audit, or production deployment was performed in Phase 3.
+- Direct Figma canvas edits were blocked by the connected service's tool-call limit during this finalization pass.
+- Canva's AI design generation reported an exhausted design-credit quota. An editable Canva Doc was imported from the final handoff Markdown instead; this is a document deliverable, not a new presentation deck.
+- The existing Canva UI handoff contains non-canonical schema claims, including owner_id/counterparty_id and percentage confidence. Follow the final GitHub handoff for exact fields and enums.
 
-## Acceptance gates before Phase 4
+## Final handoff decision and gates before Phase 4
 
-1. Product owner reviews the six screens and confirms the information architecture.
-2. Confirm whether IBM Plex Sans and the blue/navy palette are accepted.
-3. Confirm whether the first implementation should include all five desktop views or prioritize a smaller vertical slice.
-4. Convert the accepted Figma screens into frontend components, using the existing Supabase schema and authorization model.
-5. Add empty, loading, validation, error, and permission-denied states during implementation; they are not yet fully represented as separate frames.
+The final product contract is now recorded in [phase-3-final-handoff.md](phase-3-final-handoff.md). Under the request to complete Phase 3, the working design baseline is IBM Plex Sans, the existing navy/blue/cool-gray palette, and a bounded first vertical slice of authenticated workspace shell → authorized commitments list → commitment detail. These are implementation baselines, not a claim of formal accessibility certification or a live product.
+
+1. Sync the final schema/interaction contract into the existing Figma canvas when Figma editing is available. The canvas was not edited during this session because the Figma connector tool-call limit was reached.
+2. Correct the existing Canva UI handoff wherever it conflicts with the verified schema; the new Canva Doc and GitHub handoff are the canonical implementation contracts meanwhile.
+3. Resolve whether the connected Supabase project ref `htfrixfcirgrhlmwtkjs`, accessed through the Hashttick connection and containing Hashttick migration history, is intentionally shared. Do not run cleanup or hosted tests against it until the environment is confirmed.
+4. Implement the bounded first slice in Phase 4 using the existing schema/RLS contract.
+5. Add and test loading, empty, filtered-empty, validation, permission-denied, error, confirmed-success, and unknown-outcome states; they are not yet wired into a running frontend.
 
 ## Explicit limitations
 
