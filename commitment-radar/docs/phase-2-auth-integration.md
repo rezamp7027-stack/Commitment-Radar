@@ -1,6 +1,6 @@
 # Commitment Radar — Phase 2 Auth/RLS Integration
 
-**Status:** Real Auth/PostgREST harness implemented. CI now runs it against a disposable local Supabase stack; an additional hosted disposable-project run remains optional.  
+**Status:** PASS — GitHub Actions run `38740987305` passed the local real Auth/PostgREST integration suite, 11/11 scenarios. An additional hosted disposable-project run remains optional.  
 **Target repository:** `rezamp7027-stack/Commitment-Radar`, default branch `main`  
 **Production Supabase:** `htfrixfcirgrhlmwtkjs` — not a test target.
 
@@ -62,10 +62,10 @@ The script generates unique temporary user emails/passwords at runtime and does 
 ## CI behavior
 
 - The PostgreSQL 16 contract job continues to run on `main`, on relevant pull requests, and by manual dispatch.
-- The real Supabase Auth job is opt-in through the repository variable because it needs a dedicated project and a service-role secret.
+- The local Supabase Auth/PostgREST integration job runs by default; the separate hosted-project parity job is opt-in through the repository variable because it needs a dedicated project and a service-role secret.
 - JavaScript syntax validation runs in the regular contract job even when the hosted Auth job is disabled.
 - A skipped hosted Auth job is **not** counted as a passing Auth integration test.
 
 ## Limitations and acceptance
 
-Phase 2's real-Auth acceptance gate is the local Supabase integration job: it exercises actual Auth-issued JWTs and PostgREST in the Supabase stack, with the committed migrations. A hosted disposable-project run provides additional deployment-parity evidence but is separate. The PostgreSQL contract harness alone proves only database-policy behavior with simulated claims; it does not prove Auth issuance or JWT propagation. This test is an authorization regression suite, not a penetration test.
+Phase 2's local real-Auth acceptance gate passed in run `38740987305`: it exercises actual Auth-issued JWTs and PostgREST in the Supabase stack after applying the committed migrations. A hosted disposable-project run provides additional deployment-parity evidence but is separate. The PostgreSQL contract harness alone proves only database-policy behavior with simulated claims; it does not prove Auth issuance or JWT propagation. This test is an authorization regression suite, not a penetration test.
