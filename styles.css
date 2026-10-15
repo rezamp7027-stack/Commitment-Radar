@@ -14,3 +14,18 @@
 .module-row p{margin:8px 0 0;overflow-wrap:anywhere}
 .module-link{display:inline-block;margin-top:8px;color:var(--teal);overflow-wrap:anywhere}
 @media(max-width:640px){.view-nav{margin-inline:-2px}.view-tab{padding:9px 11px;font-size:13px}.module-row{flex-wrap:wrap}.module-row>button{flex:1 1 auto}}
+
+
+.list-tools{display:grid;grid-template-columns:minmax(0,1fr) 190px;gap:12px;margin-bottom:14px}
+.list-tools .field{min-width:0}
+.item-actions{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.item-actions .secondary{padding:6px 9px;font-size:12px}
+.status-pill{font-weight:700}
+.status-in_progress{color:#a4c8ff;background:#172e4a}
+.status-blocked{color:var(--amber);background:#392d1c}
+.status-cancelled{color:#b7c2d1;background:#202d3d}
+.status-done{color:var(--teal);background:#14302f}
+.status-open{color:#c3d1e3;background:#1b2a3e}
+.item .hint{overflow-wrap:anywhere}
+@media(max-width:640px){.list-tools{grid-template-columns:1fr}.item-actions{width:100%;justify-content:flex-end}.item-actions .secondary{padding:9px 12px}}
+@media(max-width:520px){.item{flex-wrap:wrap}.item-main{flex-basis:calc(100% - 42px)}.item-actions{padding-left:30px}}
