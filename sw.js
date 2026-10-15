@@ -1,5 +1,5 @@
 const CACHE_PREFIX = 'commitment-radar-shell-';
-const CACHE_NAME = `${CACHE_PREFIX}v2`;
+const CACHE_NAME = `${CACHE_PREFIX}v3`;
 const OFFLINE_URL = new URL('./offline.html', self.location.href).toString();
 const SHELL_ASSETS = [
   OFFLINE_URL,
@@ -29,10 +29,17 @@ self.addEventListener('fetch', event => {
 
   if (request.mode === 'navigate') {
     event.respondWith((async () => {
-      try { return await fetch(request); }
-      catch {
-        const cache = await caches.open(CACHE_NAME);
-        return (await cache.match(OFFLINE_URL)) || Response.error();
+      const cache = await caches.open(CACHE_NAME);
+      const offlinePage = () => cache.match(OFFLINE_URL);
+      if (self.navigator && self.navigator.onLine === false) {
+        return (await offlinePage()) || Response.error();
+      }
+      try {
+        const response = await fetch(request);
+        if (response.ok) return response;
+        return response;
+      } catch {
+        return (await offlinePage()) || Response.error();
       }
     })());
     return;
