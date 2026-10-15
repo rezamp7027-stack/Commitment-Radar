@@ -27,7 +27,7 @@
 - Supabase security advisor returned no findings on 2026-10-15. Performance advisor reported 22 unused-index notices; these are informational on a low-usage/empty dataset and do not justify dropping indexes without workload evidence.
 - RLS policy definitions and helper functions were inspected. Local CI covers tenant isolation and viewer write denial; hosted two-account verification against the connected project remains NOT RUN.
 
-## Required runtime tests — NOT RUN
+## Remaining manual/hosted runtime tests — NOT RUN
 1. Configure the actual project URL and public key; confirm the client connects.
 2. Sign up with a test account and complete email confirmation if enabled.
 3. Sign in, create a workspace, reload, and confirm the workspace remains available.
@@ -36,8 +36,8 @@
 6. Delete a test commitment and confirm it no longer appears.
 7. Test no-due-date, due-today, overdue, and completed records.
 8. Test invalid email, wrong password, expired session, offline/network failure, and missing configuration.
-9. Use two separate test users in two separate organizations. Verify neither can list, create, update, or delete the other's commitments by manipulating request filters or payloads.
-10. Confirm viewer-role members cannot write, and editor/owner permissions match intended policy.
+9. Repeat tenant-isolation checks against a dedicated disposable hosted Supabase project using two separate test users; verify neither can list, create, update, or delete the other's commitments by manipulating request filters or payloads. Local CI already tests these invariants on an isolated local stack.
+10. Confirm hosted viewer-role members cannot write, and editor/owner permissions match intended policy. Local CI already tests viewer write denial and the organization RPC.
 11. Check browser console for module/CDN errors and responsive keyboard navigation at mobile widths.
 12. Verify the deployed host's allowed redirect URLs and email-confirmation behavior in Supabase Auth settings.
 
