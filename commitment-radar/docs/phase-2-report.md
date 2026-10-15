@@ -31,10 +31,18 @@ Backend hardening migration applied to the linked Supabase project. Artifacts ar
 ## Remaining release gates
 
 - Clean-room CI validation of the reconstructed baseline plus hardening migration: **confirmed** by GitHub Actions run `38732428069` on 2026-10-15. Both migrations, the schema/grant contract test, and the behavioral test passed in PostgreSQL 16. This does not establish that the baseline provisions a fresh hosted Supabase project. The baseline remains a catalog-based reconstruction, not a byte-for-byte recovery of the original source.
-- Run authenticated integration tests with two users in separate organizations; verify cross-tenant reads and writes are denied.
-- Verify viewer/editor/admin/owner permissions with actual JWT-authenticated requests.
-- CI is now present and has a passing clean-room PostgreSQL run. Remaining release validation is real hosted-Supabase/Auth integration using distinct JWTs and roles; the CI test role/`auth.uid()` setup is Supabase-compatible but is not a live Auth end-to-end test.
-- Complete frontend, visual QA, and deployment in later phases.
+- A real Supabase Auth/PostgREST integration harness is now implemented at `supabase/tests/auth_rls_integration.mjs`. It creates unique temporary Auth users, signs in to obtain JWTs, tests cross-tenant reads/writes, role boundaries, anonymous RPC denial, creator-ID spoofing, role self-elevation, and owner-membership creation, then attempts cleanup.
+- GitHub Actions run `38740127238` on `main` passed the PostgreSQL 16 contract suite, both migrations, SQL security/behavior tests, and the JavaScript syntax check for the Auth integration harness.
+- The `supabase-auth-integration` job was **skipped** because `ENABLE_SUPABASE_AUTH_INTEGRATION` is not enabled. This is intentional until dedicated disposable-project secrets are configured; it is not a passing hosted Auth test.
+- The workflow now triggers on `main`, relevant pull requests, and manual dispatch. The production Supabase project was not modified during this phase.
+- Complete the hosted Auth integration run against a dedicated disposable Supabase project before calling the phase fully accepted. Frontend, visual QA, and deployment remain later-phase work.
+
+## Phase 2 security test artifacts
+
+- Real Auth integration harness: `supabase/tests/auth_rls_integration.mjs`.
+- Configuration and safety runbook: `docs/phase-2-auth-integration.md`.
+- Latest regular CI evidence: https://github.com/rezamp7027-stack/Commitment-Radar/actions/runs/38740127238 (success; hosted Auth job skipped).
+- Figma security flow diagram: https://www.figma.com/board/Xq1qDodnEUdIyrUgHIIqeA?utm_source=chatgpt&utm_content=edit_in_figjam.
 
 ## Design and planning artifacts
 
