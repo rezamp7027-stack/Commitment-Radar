@@ -30,10 +30,10 @@ Backend hardening migration applied to the linked Supabase project. Artifacts ar
 
 ## Remaining release gates
 
-- Validate the reconstructed baseline plus hardening migrations in a disposable PostgreSQL/Supabase environment. The workflow and behavioral test are committed, but a completed GitHub Actions run was not observable during this session. The baseline is a catalog-based reconstruction, not a byte-for-byte recovery of the original source.
+- Clean-room CI validation of the reconstructed baseline plus hardening migration: **confirmed** by GitHub Actions run `38732428069` on 2026-10-15. Both migrations, the schema/grant contract test, and the behavioral test passed in PostgreSQL 16. This does not establish that the baseline provisions a fresh hosted Supabase project. The baseline remains a catalog-based reconstruction, not a byte-for-byte recovery of the original source.
 - Run authenticated integration tests with two users in separate organizations; verify cross-tenant reads and writes are denied.
 - Verify viewer/editor/admin/owner permissions with actual JWT-authenticated requests.
-- Add CI that runs SQL contract checks against an ephemeral database or disposable Supabase project.
+- CI is now present and has a passing clean-room PostgreSQL run. Remaining release validation is real hosted-Supabase/Auth integration using distinct JWTs and roles; the CI test role/`auth.uid()` setup is Supabase-compatible but is not a live Auth end-to-end test.
 - Complete frontend, visual QA, and deployment in later phases.
 
 ## Design and planning artifacts

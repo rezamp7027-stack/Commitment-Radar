@@ -47,10 +47,10 @@ These are proposed roles for a supervised workflow, not evidence that four auton
 | Fourteen FK supporting indexes exist | Pass | SQL catalog contract passed |
 | Security advisor | Zero findings | Observed after migration |
 | Unindexed FK advisor | Zero findings | Observed after migration |
-| Real user A cannot read organization B | Not run | Requires authenticated integration setup |
-| Viewer cannot mutate records | Not run | Requires authenticated integration setup |
-| Owner can create organization and is owner membership | Not run | Requires authenticated integration setup |
-| Clean-room bootstrap from committed baseline migration | Not yet verified | Historical initial migration source was absent from checked branches |
+| Real user A cannot read organization B | Partial | Synthetic owner-isolation check passed in clean-room CI; live Supabase Auth/JWT integration remains pending |
+| Viewer cannot mutate records | Partial | Synthetic authenticated-role denial check passed in clean-room CI; live Supabase Auth/JWT integration remains pending |
+| Owner can create organization and is owner membership | Partial | Organization RPC and owner-membership check passed in clean-room CI; live Supabase Auth/JWT integration remains pending |
+| Reconstructed baseline + hardening migration in clean-room PostgreSQL 16 | Confirmed | GitHub Actions run `38732428069` passed both migrations and both SQL test scripts; hosted Supabase provisioning remains unverified |
 
 ## Related Codelit resource
 
