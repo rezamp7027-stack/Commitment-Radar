@@ -8,6 +8,9 @@ const manifest = JSON.parse(readFileSync(new URL('../manifest.webmanifest', impo
 const sw = readFileSync(new URL('../sw.js', import.meta.url), 'utf8');
 const offline = readFileSync(new URL('../offline.html', import.meta.url), 'utf8');
 const icon = readFileSync(new URL('../icons/icon.svg', import.meta.url), 'utf8');
+const icon192 = readFileSync(new URL('../icons/icon-192.png', import.meta.url));
+const icon512 = readFileSync(new URL('../icons/icon-512.png', import.meta.url));
+const appleIcon = readFileSync(new URL('../icons/apple-touch-icon.png', import.meta.url));
 
 test('PWA manifest has a valid standalone install configuration', () => {
   assert.equal(manifest.name, 'Commitment Radar');
@@ -16,6 +19,9 @@ test('PWA manifest has a valid standalone install configuration', () => {
   assert.equal(manifest.display, 'standalone');
   assert.equal(manifest.theme_color, '#0b1220');
   assert.ok(manifest.icons.some(item => item.src === './icons/icon.svg' && item.type === 'image/svg+xml'));
+  assert.ok(manifest.icons.some(item => item.src === './icons/icon-192.png' && item.sizes === '192x192'));
+  assert.ok(manifest.icons.some(item => item.src === './icons/icon-512.png' && item.sizes === '512x512'));
+  assert.ok(manifest.icons.some(item => item.src === './icons/icon-512.png' && item.purpose === 'maskable'));
 });
 
 test('HTML links the manifest and exposes install prompt only when supported', () => {
@@ -46,8 +52,18 @@ test('offline fallback does not claim private workspace data is available offlin
   assert.match(offline, /private workspace data is not stored/i);
 });
 
-test('PWA icon is an SVG with the product palette', () => {
+test('PWA icons include valid PNG signatures and the product SVG', () => {
   assert.match(icon, /^<svg\s/);
   assert.match(icon, /#0b1220/);
   assert.match(icon, /#62e0c5/);
+  for (const png of [icon192, icon512, appleIcon]) {
+    assert.equal(png.readUInt32BE(0), 0x89504e47);
+    assert.equal(png.toString('ascii', 1, 4), 'PNG');
+  }
+  assert.equal(icon192.readUInt32BE(16), 192);
+  assert.equal(icon192.readUInt32BE(20), 192);
+  assert.equal(icon512.readUInt32BE(16), 512);
+  assert.equal(icon512.readUInt32BE(20), 512);
+  assert.equal(appleIcon.readUInt32BE(16), 180);
+  assert.equal(appleIcon.readUInt32BE(20), 180);
 });
