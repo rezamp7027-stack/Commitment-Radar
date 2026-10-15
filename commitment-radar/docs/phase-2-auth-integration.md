@@ -1,6 +1,6 @@
 # Commitment Radar — Phase 2 Auth/RLS Integration
 
-**Status:** Harness implemented; real hosted Auth run is gated pending a dedicated disposable Supabase test project and repository secrets.  
+**Status:** Real Auth/PostgREST harness implemented. CI now runs it against a disposable local Supabase stack; an additional hosted disposable-project run remains optional.  
 **Target repository:** `rezamp7027-stack/Commitment-Radar`, default branch `main`  
 **Production Supabase:** `htfrixfcirgrhlmwtkjs` — not a test target.
 
@@ -29,7 +29,11 @@ The harness is intentionally blocked from running against the production project
 | AUTH-03 | Authenticated owner creates organization through RPC | Organization and owner membership both exist |
 | CLEAN-01 | Test cleanup | Temporary organizations and Auth identities deleted; cleanup failure fails the run |
 
-## Enable the hosted integration job
+## Automated local integration (default CI)
+
+The workflow installs the Supabase CLI, starts a disposable local Supabase stack in Docker, applies the committed migrations, obtains local-only API credentials, and runs the same Auth/PostgREST harness. No hosted project credentials are needed for this job. The stack is stopped at the end of the job, including on failure. The local job is the primary real-JWT integration gate.
+
+## Optional hosted integration job
 
 Use a dedicated, disposable Supabase project whose schema/migrations match Commitment Radar. Do **not** use the production project.
 
@@ -64,4 +68,4 @@ The script generates unique temporary user emails/passwords at runtime and does 
 
 ## Limitations and acceptance
 
-Phase 2 is not fully release-accepted until the hosted integration job has a fresh successful run against a disposable project. The CI PostgreSQL harness proves database-policy behavior with simulated claims; it does not itself prove Supabase Auth issuance, JWT propagation, or hosted PostgREST behavior. This test is an authorization regression suite, not a penetration test.
+Phase 2's real-Auth acceptance gate is the local Supabase integration job: it exercises actual Auth-issued JWTs and PostgREST in the Supabase stack, with the committed migrations. A hosted disposable-project run provides additional deployment-parity evidence but is separate. The PostgreSQL contract harness alone proves only database-policy behavior with simulated claims; it does not prove Auth issuance or JWT propagation. This test is an authorization regression suite, not a penetration test.
