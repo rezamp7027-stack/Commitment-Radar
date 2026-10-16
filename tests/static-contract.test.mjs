@@ -76,3 +76,14 @@ test('built-in Supabase email authorization failures have actionable guidance', 
   assert.match(moduleSource, /email address not authorized/i);
   assert.match(moduleSource, /only sends to authorized team addresses/);
 });
+
+
+test('changing Supabase connection reloads once instead of registering duplicate auth listeners', () => {
+  assert.match(moduleSource, /saveCfg\(\{url,key\}\);hide\('settingsStatus'\);window\.location\.reload\(\)/);
+  assert.doesNotMatch(moduleSource, /saveCfg\(\{url,key\}\);hide\('settingsStatus'\);await init\(\)/);
+});
+
+test('workspace and commitment forms reject duplicate submissions while busy', () => {
+  assert.match(moduleSource, /workspaceForm'\)\.addEventListener\('submit',async e=>\{e\.preventDefault\(\);if\(busy\)return/);
+  assert.match(moduleSource, /commitForm'\)\.addEventListener\('submit',async e=>\{e\.preventDefault\(\);if\(busy\)return/);
+});
