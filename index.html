@@ -44,7 +44,7 @@ function cfg(){try{return JSON.parse(localStorage.getItem(CONFIG_KEY)||'null')||
 function saveCfg(c){localStorage.setItem(CONFIG_KEY,JSON.stringify(c))}
 function validCfg(c){return c&&/^https:\/\/[a-zA-Z0-9.-]+$/.test(c.url)&&typeof c.key==='string'&&c.key.length>20}
 function showOnlyAuth(){ $('authPanel').classList.remove('hidden');$('workspacePanel').classList.add('hidden');$('settingsPanel').classList.remove('open');setupCaptcha();}
-function setBusy(v){busy=v;document.querySelectorAll('button').forEach(b=>{if(!['settingsBtn','closeSettings'].includes(b.id))b.disabled=v})}
+function setBusy(v){busy=v;document.querySelectorAll('button').forEach(b=>{if(!['settingsBtn','closeSettings'].includes(b.id))b.disabled=v});if(!v&&$('googleSignInBtn'))$('googleSignInBtn').disabled=!captchaToken}
 async function init(){
  const c=cfg();
  if(!validCfg(c)){setTag('SUPABASE · NOT CONFIGURED');$('settingsPanel').classList.add('open');$('projectUrl').value=c?.url||'https://htfrixfcirgrhlmwtkjs.supabase.co';$('anonKey').value=c?.key||'';return}
