@@ -255,7 +255,7 @@ test('Google OAuth requires a CAPTCHA token and server-side Turnstile verificati
   assert.match(moduleSource, /client\.functions\.invoke\('verify-turnstile',\{body:\{token:captchaToken\}\}\)/);
   assert.match(moduleSource, /verification\?\.success!==true/);
   assert.ok(moduleSource.indexOf("client.functions.invoke('verify-turnstile'") < moduleSource.indexOf("client.auth.signInWithOAuth({provider:'google'"), 'CAPTCHA must be verified before OAuth begins');
-  assert.match(turnstileFunction, /Deno\.env\.get\('TURNSTILE_SECRET_KEY'\)/);
+  assert.match(turnstileFunction, /Deno\.env\.get\(["']TURNSTILE_SECRET_KEY["']\)/);
   assert.match(turnstileFunction, /challenges\.cloudflare\.com\/turnstile\/v0\/siteverify/);
   assert.match(turnstileFunction, /result\.hostname !== ALLOWED_HOSTNAME/);
   assert.match(turnstileFunction, /req\.headers\.get\('origin'\) !== ALLOWED_ORIGIN/);
