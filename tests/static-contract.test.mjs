@@ -57,3 +57,22 @@ test('cancelled commitments are not counted as open or overdue', () => {
   assert.match(moduleSource, /function isOverdue\(x\)\{return isOpen\(x\)&&x\.due_date/);
   assert.match(moduleSource, /cb\.disabled=isCancelled\(x\)/);
 });
+
+
+test('signup maps Supabase email rate limits to actionable guidance', () => {
+  assert.match(moduleSource, /function authErrorText\(e\)/);
+  assert.match(moduleSource, /over_email_send_rate_limit/);
+  assert.match(moduleSource, /email rate limit exceeded/i);
+  assert.match(moduleSource, /Do not keep retrying/);
+  assert.match(moduleSource, /configure custom SMTP in Supabase Auth/);
+  assert.match(moduleSource, /show\('authStatus',authErrorText\(ex\),'error'\)/);
+});
+
+test('authentication submit ignores duplicate submissions while a request is pending', () => {
+  assert.match(moduleSource, /authForm'\)\.addEventListener\('submit',async e=>\{e\.preventDefault\(\);if\(!client\|\|busy\)return/);
+});
+
+test('built-in Supabase email authorization failures have actionable guidance', () => {
+  assert.match(moduleSource, /email address not authorized/i);
+  assert.match(moduleSource, /only sends to authorized team addresses/);
+});
