@@ -43,3 +43,13 @@ The frontend implements authentication, workspace selection/creation, commitment
 ## Release decision
 
 Current state: **not yet production-ready**. The code and local backend contracts are substantially implemented, but real browser verification, hosted tenant-isolation/role testing, deployment configuration, and final CI confirmation remain release gates. Keep the PR in draft until those gates have evidence.
+
+
+## Google OAuth and Turnstile release gate
+
+- Google OAuth must be configured in Supabase Auth with the exact callback and GitHub Pages redirect allow-list.
+- The Google button is disabled until Turnstile returns a token. Before starting OAuth, the browser calls the `verify-turnstile` Edge Function; the function validates the token with Cloudflare and checks origin and hostname.
+- Deploy the function with JWT verification disabled because the request is pre-authentication, and set `TURNSTILE_SECRET_KEY` as an Edge Function secret. A secret saved only in Supabase Auth CAPTCHA protection settings does not automatically become an Edge Function secret.
+- Keep the Cloudflare secret out of GitHub and frontend JavaScript. The public site key may appear in frontend code.
+- Do not merge or claim this path is live until the Edge Function deployment and real browser tests are verified. Supabase project permissions must be resolved first; do not deploy or run migrations against the mixed-history project as a workaround.
+- This UI-level CAPTCHA adds friction but does not prevent a determined client from calling Supabase OAuth directly. Authentication and RLS remain the security boundaries.

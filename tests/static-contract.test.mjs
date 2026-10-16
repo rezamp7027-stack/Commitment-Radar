@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+const turnstileFunction = readFileSync(new URL('../supabase/functions/verify-turnstile/index.ts', import.meta.url), 'utf8');
 
 const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
 const styles = readFileSync(new URL('../styles.css', import.meta.url), 'utf8');
@@ -246,4 +247,17 @@ test('authentication submit blocks duplicate requests while busy', () => {
 test('workspace and commitment forms guard duplicate submissions', () => {
   assert.match(moduleSource, /workspaceForm'\)\.addEventListener\('submit',async e=>\{e\.preventDefault\(\);if\(busy\)return/);
   assert.match(moduleSource, /commitForm'\)\.addEventListener\('submit',async e=>\{e\.preventDefault\(\);if\(busy\)return/);
+});
+
+
+test('Google OAuth requires a CAPTCHA token and server-side Turnstile verification before redirect', () => {
+  assert.match(moduleSource, /const disabled=busy\|\|!captchaToken\|\|TURNSTILE_SITE_KEY\.startsWith\('REPLACE_'\)\|\|!window\.turnstile/);
+  assert.match(moduleSource, /client\.functions\.invoke\('verify-turnstile',\{body:\{token:captchaToken\}\}\)/);
+  assert.match(moduleSource, /verification\?\.success!==true/);
+  assert.ok(moduleSource.indexOf("client.functions.invoke('verify-turnstile'") < moduleSource.indexOf("client.auth.signInWithOAuth({provider:'google'"), 'CAPTCHA must be verified before OAuth begins');
+  assert.match(turnstileFunction, /Deno\.env\.get\('TURNSTILE_SECRET_KEY'\)/);
+  assert.match(turnstileFunction, /challenges\.cloudflare\.com\/turnstile\/v0\/siteverify/);
+  assert.match(turnstileFunction, /result\.hostname !== ALLOWED_HOSTNAME/);
+  assert.match(turnstileFunction, /req\.headers\.get\('origin'\) !== ALLOWED_ORIGIN/);
+  assert.doesNotMatch(turnstileFunction, /TURNSTILE_SECRET_KEY\s*=\s*['"]/);
 });
