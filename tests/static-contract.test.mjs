@@ -258,6 +258,6 @@ test('Google OAuth requires a CAPTCHA token and server-side Turnstile verificati
   assert.match(turnstileFunction, /Deno\.env\.get\(["']TURNSTILE_SECRET_KEY["']\)/);
   assert.match(turnstileFunction, /challenges\.cloudflare\.com\/turnstile\/v0\/siteverify/);
   assert.match(turnstileFunction, /result\.hostname !== ALLOWED_HOSTNAME/);
-  assert.match(turnstileFunction, /req\.headers\.get\('origin'\) !== ALLOWED_ORIGIN/);
+  assert.match(turnstileFunction, /req\.headers\.get\(["']origin["']\) !== ALLOWED_ORIGIN/);
   assert.doesNotMatch(turnstileFunction, /TURNSTILE_SECRET_KEY\s*=\s*['"]/);
 });
