@@ -1,52 +1,75 @@
 # Commitment Radar — Verification Checklist
 
 ## Scope and evidence
-- Target: `index.html` on the `main` branch.
-- Backend: Supabase project `htfrixfcirgrhlmwtkjs`.
+- Implementation target: branch `work/phase-4-quality-ui-20261016`, root `index.html`.
+- Backend observed through the Supabase connection: project `htfrixfcirgrhlmwtkjs`.
 - This is a manual/automated test plan. Tests below are not marked passed unless an actual run produced evidence.
 
-## Implemented in the current browser client
-- Supabase JS v2 is loaded as an ES module.
-- Project URL and public anon/publishable key can be configured in-browser.
-- Email/password sign-in and sign-up flows.
-- Organization discovery via `cr_memberships` and `cr_organizations`.
-- Workspace creation via `cr_create_organization(p_name)`.
-- Commitment list, create, complete/reopen, delete, and filters.
-- Summary counts derived from the loaded organization commitments.
-- Loading, empty, and visible error states.
-- Responsive CSS and semantic labels for primary controls.
+## Implemented in the browser client
+- Supabase JS v2 configuration with public anon/publishable key only.
+- Email/password sign-in/sign-up and membership discovery.
+- Workspace creation through `cr_create_organization(p_name)`.
+- Commitment list, create, edit, complete/reopen, delete, status filters, search, priority filtering, sorting, and project assignment.
+- Project create/edit/archive/reactivate workflows using existing `cr_projects` columns.
+- Review request creation and approve/reject decisions using existing `cr_reviews` columns, with RLS as the authorization source of truth.
+- Lazy commitment-detail sections for evidence add/remove, dependency add/remove, review history, and recent audit activity.
+- Source excerpt and source URL entry/display using existing commitment columns.
+- Summary counts excluding cancelled records from active/overdue metrics.
+- Loading, empty, visible error, and confirmed mutation feedback states.
+- Responsive layout, keyboard focus indicators, reduced-motion handling, and accessible labels for primary controls.
 
-## Static verification completed
-- Inline module script parsed successfully after stripping the browser import line and wrapping the module body in an async function.
-- Commitment status values were checked against the database CHECK constraint: `open`, `in_progress`, `blocked`, `done`, `cancelled`.
-- Priority values were checked against the database CHECK constraint: `low`, `normal`, `high`, `urgent`.
-- The browser code contains no service-role or secret key pattern; the embedded key is a public publishable key.
-- Regression checks cover the database's two-character trimmed title minimum, cancelled-status metrics, and auth-listener setup.
-- GitHub Actions static-contract run passed after the latest frontend fixes (8 tests) on commit `454c84529a1865a83a7330cc56c9b1d33495496f`: https://github.com/rezamp7027-stack/Commitment-Radar/actions/runs/38784601408
-- The database CI run passed both the PostgreSQL contract suite and isolated local Supabase Auth/PostgREST integration suite on database commit `7d2aa233fa04fabd69bb3080c0c1ac1fbd52c302`: https://github.com/rezamp7027-stack/Commitment-Radar/actions/runs/38755403462
-- Supabase security advisor returned no findings on 2026-10-15. Performance advisor reported 22 unused-index notices; these are informational on a low-usage/empty dataset and do not justify dropping indexes without workload evidence.
-- RLS policy definitions and helper functions were inspected. Local CI covers tenant isolation and viewer write denial; hosted two-account verification against the connected project remains NOT RUN.
+## Static verification
+- External `app.js` browser module parses as an async function body after stripping the Supabase browser import; `index.html` loads `./app.js` and `./styles.css`.
+- Commitment status values match database constraints: `open`, `in_progress`, `blocked`, `done`, `cancelled`.
+- Priority values match database constraints: `low`, `normal`, `high`, `urgent`.
+- No service-role or secret key pattern is embedded in the frontend.
+- Regression checks cover trimmed title validation, cancelled metrics, auth-listener setup, search/sort wiring, edit/source fields, safe HTTP(S) URLs, project and review contracts, evidence/dependency/audit queries, zero-row mutations, disabled-state preservation, responsive styles, focus, and reduced motion.
+- Latest observed static-contract CI run passed on commit `588c2e851c6327be5b25f267820aa53d8a5c6cf6`: https://github.com/rezamp7027-stack/Commitment-Radar/actions/runs/38945992414. This validates only the automated static-contract suite, not browser or hosted behavior.
+- PostgreSQL contract suite passed on the same candidate run; isolated local Supabase Auth/PostgREST integration is still running on that commit. The local integration suite passed on an earlier candidate commit, but the final run should complete before the PR leaves draft.
 
-## Remaining manual/hosted runtime tests — NOT RUN
-1. Configure the actual project URL and public key; confirm the client connects.
-2. Sign up with a test account and complete email confirmation if enabled.
-3. Sign in, create a workspace, reload, and confirm the workspace remains available.
-4. Create a commitment with each supported priority and source type.
-5. Complete and reopen a commitment; confirm database status is `done` then `open`.
-6. Delete a test commitment and confirm it no longer appears.
-7. Test no-due-date, due-today, overdue, and completed records.
-8. Test invalid email, wrong password, expired session, offline/network failure, and missing configuration.
-9. Repeat tenant-isolation checks against a dedicated disposable hosted Supabase project using two separate test users; verify neither can list, create, update, or delete the other's commitments by manipulating request filters or payloads. Local CI already tests these invariants on an isolated local stack.
-10. Confirm hosted viewer-role members cannot write, and editor/owner permissions match intended policy. Local CI already tests viewer write denial and the organization RPC.
-11. Check browser console for module/CDN errors and responsive keyboard navigation at mobile widths.
-12. Verify the deployed host's allowed redirect URLs and email-confirmation behavior in Supabase Auth settings.
+## Required browser and hosted tests — NOT YET VERIFIED
+1. Open the branch build in a browser and inspect console/network errors, including the Supabase JS CDN.
+2. Sign up with a test account, confirm email if enabled, sign in, sign out, and sign in again.
+3. Create a workspace, reload the page, switch workspaces, and verify membership persistence.
+4. Create, edit, complete, reopen, and delete a test commitment; verify the database response and rendered state after each action.
+5. Save and render source excerpt and URL; reject malformed or non-HTTP(S) URLs.
+6. Test all priorities, all supported statuses, no due date, due today, overdue, blocked, cancelled, and completed records.
+7. Create/edit/archive/reactivate projects; confirm archived project labels, workspace switching, and project assignment do not leak across organizations.
+8. Request a review, verify duplicate pending requests are rejected, approve/reject from a different account, verify submitters cannot decide their own requests, and test viewer/editor role restrictions.
+9. Test search, status filters, priority filter, each sort mode, zero records, and filters with no matching records.
+11. Test wrong password, invalid email, expired session, CDN/network failure, failed writes, and a mutation returning zero affected rows.
+12. Test keyboard-only navigation, focus visibility, 320px mobile width, tablet layout, and reduced-motion preference.
+13. Test organization isolation and viewer/editor/owner role permissions using at least two accounts on a dedicated disposable hosted Supabase project.
+14. Verify authentication redirect URLs and email-confirmation settings on the intended hosting domain.
+15. Run an independent review of the exact candidate commit and capture fresh CI results.
 
-## Release blockers
-- No authenticated browser integration test has been run.
-- Hosted cross-organization isolation and role permissions against a dedicated disposable project remain unverified; local integration CI passed.
-- Static verification CI is confirmed green, but no hosting/deployment workflow or live deployment was verified.
-- The page is preconfigured with a public publishable key; browser configuration override remains optional. The public key is not a secret.
-- Figma inspection/update was blocked by the connected Starter plan's MCP tool-call limit. Canva handoff content was inspected and found to have drift from the implemented schema and UI; no Canva edits have been saved.
+## Environment and release blockers
+- The connected Supabase project migration history includes Hashttick migrations as well as Commitment Radar migrations. Do not reset, clean, replay migrations, or change live schema/data while project isolation is unresolved.
+- No authenticated browser end-to-end run has been recorded for this candidate.
+- Hosted cross-organization isolation and role permissions remain unverified.
+- Hosting configuration and a live deployment have not been verified.
+- Evidence/dependency management and audit history are implemented in the branch but not yet browser-verified; evidence editing and full audit filtering/pagination are not included.
+- The Figma concept exists in a separate file; visual parity has not been checked in a running browser.
+- Canva handoff has an unsaved draft correction; thumbnail preview retrieval returned a Canva 503, so the draft has not been saved pending user review.
 
 ## Safe configuration
-Use only the Supabase project URL and public anon/publishable key. Never place a service-role or secret key in the repository, browser storage, HTML, or client configuration.
+Use only the public anon/publishable key in the browser. Never place a service-role or secret key in the repository, browser storage, HTML, or client configuration.
+
+
+## Email authentication and CAPTCHA release gate
+- [x] Frontend includes an explicit Cloudflare Turnstile widget and token lifecycle.
+- [x] Sign-in, sign-up, and password-recovery requests pass the token to Supabase Auth.
+- [x] Password recovery uses a non-enumerating success message, an explicit redirect URL, and a password-update screen after the recovery callback.
+- [x] The public Turnstile site key is configured in `app.js` for `rezamp7027-stack.github.io`.
+- [x] User reports enabling Supabase Auth CAPTCHA and saving the Turnstile secret in the dashboard; this dashboard state has not been independently verified. Never commit the secret.
+- [ ] Verify Supabase Auth rejects missing/invalid/expired/replayed tokens in a hosted test.
+- [ ] Verify SMTP delivery, confirmation redirect, and password-recovery redirect.
+
+
+## Live Supabase audit findings (read-only inspection on 2026-10-16)
+- [x] Confirmed all eight `public.cr_*` tables have RLS enabled.
+- [x] Inspected current table policies: reads are membership-scoped through `private.cr_is_member`; writes use role checks through `private.cr_can_edit`/ `private.cr_can_manage`, and review decisions prevent submitters from reviewing their own requests.
+- [x] Inspected the private authorization helpers: they use `SECURITY DEFINER`, a fixed `search_path = pg_catalog`, and compare membership against `auth.uid()`.
+- [ ] **Release security warning:** Supabase Security Advisor reports leaked-password protection is disabled. Enable it under Supabase Auth password security settings and verify it before launch.
+- [ ] Verify these policies with two distinct authenticated users in a dedicated disposable hosted project. Catalog inspection is not a substitute for adversarial cross-tenant integration tests.
+- [ ] Supabase Performance Advisor reports 21 unused indexes. The tables are empty/new, so do not drop indexes based on this signal alone; re-evaluate after representative workload and query plans exist.
