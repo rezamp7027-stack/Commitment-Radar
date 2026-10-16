@@ -1,0 +1,26 @@
+name: Commitment Radar static contract
+
+on:
+  push:
+    branches:
+      - main
+      - work/phase-4-quality-ui-20261016
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  static-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Run static contract tests
+        run: node --test tests/static-contract.test.mjs
