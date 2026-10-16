@@ -6,7 +6,7 @@ Last updated: 2026-10-16
 
 - Repository: https://github.com/rezamp7027-stack/Commitment-Radar
 - Candidate branch: `work/phase-4-quality-ui-20261016`
-- Candidate revision when this handoff was prepared: `ec49c67d813903ac57d4ab6b99d21a3edc63bb6e`
+- Candidate revision when this handoff was prepared: `506302fefdc896d8532ab059f59d041618f1e1f3`
 - Primary candidate PR: https://github.com/rezamp7027-stack/Commitment-Radar/pull/6
 - Separate OAuth PR retained as reference only: https://github.com/rezamp7027-stack/Commitment-Radar/pull/7
 - Product/design baseline: https://www.figma.com/design/CueLiOMpV0m7OY7BEYEFcs
@@ -16,8 +16,8 @@ Last updated: 2026-10-16
 
 - RLS and database policies are the authorization boundary; client-side disabled buttons are usability controls only.
 - Browser code may contain only the Supabase public publishable/anon key and Turnstile public site key. Never commit provider client secrets, Turnstile secret, service-role keys, or other privileged credentials.
-- The connected Supabase project `htfrixfcirgrhlmwtkjs` has mixed Commitment Radar and Hashttick migration history. Do not reset it, replay migrations, seed test accounts, or run destructive integration tests against it.
-- The Supabase connector currently denies inspection/deployment permission for the selected Primary connection. The Hashttick connection must not be used as a workaround because it is a separate project/account context.
+- The connected Supabase project `htfrixfcirgrhlmwtkjs` is shared in context with Hashttick and contains live Commitment Radar rows. Do not reset it, replay migrations, seed test accounts, or run destructive integration tests against it.
+- The Supabase Primary connection denied access. Read-only inspection succeeded through the linked connection labelled Hashttick; no writes were performed. Treat this as a shared environment and do not use that connection for project changes.
 - Do not merge either PR or claim production readiness until the hosted auth flow, tenant isolation, role matrix, and deployed candidate are verified.
 - CAPTCHA is an abuse-friction layer, not a substitute for OAuth authentication or RLS authorization.
 
@@ -54,7 +54,7 @@ Last updated: 2026-10-16
 | Static contract CI | Passed on `ec49c67d813903ac57d4ab6b99d21a3edc63bb6e` | New commits require fresh CI results |
 | PostgreSQL contract | Passed on earlier candidate run | Reconfirm on latest head if workflow completes |
 | Local Supabase Auth/PostgREST integration | Pending at last observation | Wait for run result and inspect failures |
-| Hosted Supabase security review | Blocked | Connector permission denied; do not switch to Hashttick connection |
+| Hosted Supabase security review | Partial read-only inspection | RLS enabled on all eight tables; one organization, one membership, one commitment, two audit events; leaked-password protection disabled; no Edge Functions deployed. No writes performed. |
 | Figma auth/data-flow diagram | Created | https://www.figma.com/board/bliDYfRfVBmKNw44lJVakX |
 | Canva handoff | Reviewed, not modified | Preserve existing design until a specific change is approved |
 | Production deployment | Not confirmed | Do not represent candidate branch as live |

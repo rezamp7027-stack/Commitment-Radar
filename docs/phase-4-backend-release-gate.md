@@ -6,11 +6,14 @@ Last reviewed: 2026-10-16
 
 - The repository contains two ordered migrations: the initial Commitment Radar schema and a backend-hardening migration.
 - The backend contract includes eight `cr_*` tables: organizations, memberships, projects, commitments, evidence, dependencies, reviews, and audit events.
-- The connected Supabase project `htfrixfcirgrhlmwtkjs` reports all eight application tables with RLS enabled. The security advisor returned no security lints in the most recent inspection.
-- The inspected project has zero rows in the listed application tables at inspection time. This is only a point-in-time observation, not a guarantee that the environment is disposable.
+- A read-only Supabase inspection on 2026-10-16 returned project status `ACTIVE_HEALTHY`, PostgreSQL 17, and all eight `cr_*` application tables with RLS enabled.
+- Observed row counts at inspection: organizations 1, memberships 1, commitments 1, audit events 2, and projects/evidence/dependencies/reviews 0. These are live records; do not reset, truncate, seed over, or replay migrations against this environment.
+- The live migration ledger returned two Commitment Radar entries (`commitment_radar_initial_schema`, `commitment_radar_backend_hardening`). A prior Canva handoff described mixed Commitment Radar/Hashttick history; this discrepancy and shared project reference must be resolved before any write operation. The safe assumption remains that this is a shared environment.
+- The security advisor currently reports `auth_leaked_password_protection` as WARN (disabled). Remediation: https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection
+- The performance advisor reports 19 unused-index notices. These are informational and are not sufficient evidence to remove indexes; review workload/query plans before any change.
+- The live Edge Function inventory is empty: `verify-turnstile` is not deployed.
 - The backend-hardening migration uses a non-API `private` schema for security-definer membership helpers, limits function grants, adds RLS policies, and adds foreign-key-supporting indexes.
-- Existing automated suites cover PostgreSQL schema/security contracts and a real local Supabase Auth/PostgREST integration harness.
-- The connected project migration history includes both Commitment Radar and Hashttick migrations. Treat it as shared and unsafe for destructive test execution until ownership/isolation is explicitly resolved.
+- Existing automated suites cover PostgreSQL schema/security contracts and a real local Supabase Auth/PostgREST integration harness; these do not prove hosted configuration.
 
 ## Environment safety rule
 
@@ -18,14 +21,16 @@ Last reviewed: 2026-10-16
 
 ## Release blockers
 
-1. Complete the latest local Supabase integration CI run and capture its final status.
-2. Run the browser application against a dedicated disposable project: sign-up/sign-in/sign-out, workspace creation, commitment CRUD, project CRUD, evidence/dependency CRUD, review request/decision, and error recovery.
-3. Validate tenant isolation with two organizations and distinct test users.
-4. Validate roles: owner/admin/editor can edit where allowed; viewer cannot write; a review creator cannot decide their own pending review; non-members cannot read records.
-5. Verify all destructive and update paths return explicit failure on zero affected rows and preserve entered form values on recoverable errors.
-6. Test mobile viewport, keyboard navigation, focus visibility, reduced motion, malformed URLs, CDN/network failure, expired sessions, and failed PostgREST responses.
-7. Configure the intended hosting origin, HTTPS, Supabase Auth redirect allow-list, and email-confirmation behavior.
-8. Complete independent review of the exact candidate commit before merging or deploying.
+1. Complete the latest CI run on the current branch head, including static contract checks, Deno type-checking of `verify-turnstile`, PostgreSQL contracts, and local Supabase Auth/PostgREST integration.
+2. Resolve access and environment ownership. Do not mutate the current shared project; use a dedicated disposable Commitment Radar project for hosted auth/RLS tests.
+3. Configure Google OAuth credentials and Supabase callback/redirect allow-list, then deploy `verify-turnstile` with JWT verification disabled and set `TURNSTILE_SECRET_KEY` as an Edge Function secret (not only as an Auth CAPTCHA setting).
+4. Enable leaked-password protection after confirming the desired Auth policy and plan support.
+5. Run the browser application against the dedicated project: valid/invalid/expired Turnstile; Google sign-in success/cancel; sign-up/sign-in/sign-out; workspace creation; commitment CRUD; project CRUD; evidence/dependency CRUD; review request/decision; and error recovery.
+6. Validate tenant isolation with two organizations and distinct test users.
+7. Validate roles: owner/admin/editor can edit where allowed; viewer cannot write; a review creator cannot decide their own pending review; non-members cannot read records.
+8. Verify update/delete paths fail explicitly on zero affected rows and preserve form values on recoverable errors.
+9. Test mobile viewport, keyboard navigation, focus visibility, reduced motion, malformed URLs, CDN/network failure, expired sessions, and failed PostgREST responses.
+10. Complete independent review of the exact candidate commit before merging or deploying.
 
 ## Security invariants
 
