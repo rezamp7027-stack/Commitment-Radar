@@ -260,4 +260,8 @@ test('Google OAuth requires a CAPTCHA token and server-side Turnstile verificati
   assert.match(turnstileFunction, /result\.hostname !== ALLOWED_HOSTNAME/);
   assert.match(turnstileFunction, /req\.headers\.get\(["']origin["']\) !== ALLOWED_ORIGIN/);
   assert.doesNotMatch(turnstileFunction, /TURNSTILE_SECRET_KEY\s*=\s*['"]/);
+  assert.match(turnstileFunction, /req\.method !== "POST"/);
+  assert.match(turnstileFunction, /token\.length > 2048/);
+  assert.match(turnstileFunction, /if \(!verification\.ok\)/);
+  assert.match(turnstileFunction, /status = 200/);
 });
