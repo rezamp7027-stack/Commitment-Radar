@@ -152,6 +152,34 @@ async function createProject(user, organizationId, name, shouldAllow, createdBy 
   }
 }
 
+async function createCommitment(user, organizationId, title) {
+  const result = await request("/rest/v1/cr_commitments?select=id,organization_id,title", {
+    token: user.token,
+    method: "POST",
+    prefer: "return=representation",
+    body: { organization_id: organizationId, title, created_by: user.id, status: "open", priority: "normal" },
+  });
+  const rows = assertOk(result, "Create test commitment");
+  assert(Array.isArray(rows) && rows.length === 1 && rows[0].id, "Commitment creation did not return one row");
+  return rows[0];
+}
+
+async function createRelatedRecord(user, table, body, shouldAllow, label) {
+  const result = await request("/rest/v1/" + table + "?select=id,organization_id", {
+    token: user.token,
+    method: "POST",
+    prefer: "return=representation",
+    body,
+  });
+  const created = result.ok && Array.isArray(result.data) && result.data.length === 1;
+  if (shouldAllow) {
+    assert(created, label + " should be allowed; HTTP " + result.status + ": " + safeError(result.data));
+    return result.data[0];
+  }
+  assert(!result.ok || !created, label + " unexpectedly succeeded");
+  return null;
+}
+
 async function updateOrganization(user, organizationId, name, shouldAllow) {
   const result = await request("/rest/v1/cr_organizations?id=eq." + organizationId + "&select=id,name", {
     token: user.token,
@@ -202,6 +230,59 @@ async function main() {
   await addMembership(orgA, adminA.id, "admin");
   await addMembership(orgA, editorA.id, "editor");
   await addMembership(orgA, viewerA.id, "viewer");
+
+  const commitmentA = await createCommitment(ownerA, orgA, "Security commitment A " + runId);
+  const commitmentB = await createCommitment(ownerA, orgA, "Security commitment B " + runId);
+
+  await test("commitments are isolated across organizations", async () => {
+    const rows = await visibleRows(ownerB,
+      "/rest/v1/cr_commitments?id=eq." + commitmentA.id + "&select=id,organization_id");
+    assert(rows.length === 0, "A different organization read a commitment");
+  });
+
+  await test("evidence is scoped to editable members and the parent commitment", async () => {
+    const evidence = await createRelatedRecord(ownerA, "cr_evidence", {
+      organization_id: orgA, commitment_id: commitmentA.id, label: "Test evidence " + runId,
+      url: "https://example.test/evidence", note: "Temporary integration fixture", created_by: ownerA.id,
+    }, true, "Owner evidence insert");
+    const crossTenantRead = await visibleRows(ownerB,
+      "/rest/v1/cr_evidence?id=eq." + evidence.id + "&select=id,organization_id");
+    assert(crossTenantRead.length === 0, "A different organization read evidence");
+    await createRelatedRecord(viewerA, "cr_evidence", {
+      organization_id: orgA, commitment_id: commitmentA.id, label: "Viewer evidence " + runId, created_by: viewerA.id,
+    }, false, "Viewer evidence insert");
+  });
+
+  await test("dependencies cannot cross organization boundaries or be created by viewers", async () => {
+    const dependency = await createRelatedRecord(editorA, "cr_dependencies", {
+      organization_id: orgA, commitment_id: commitmentA.id, depends_on_commitment_id: commitmentB.id, created_by: editorA.id,
+    }, true, "Editor dependency insert");
+    const crossTenantRead = await visibleRows(ownerB,
+      "/rest/v1/cr_dependencies?id=eq." + dependency.id + "&select=id,organization_id");
+    assert(crossTenantRead.length === 0, "A different organization read a dependency");
+    await createRelatedRecord(viewerA, "cr_dependencies", {
+      organization_id: orgA, commitment_id: commitmentA.id, depends_on_commitment_id: commitmentB.id, created_by: viewerA.id,
+    }, false, "Viewer dependency insert");
+  });
+
+  await test("review submitter cannot approve own request but another editor can", async () => {
+    const review = await createRelatedRecord(ownerA, "cr_reviews", {
+      organization_id: orgA, commitment_id: commitmentA.id, created_by: ownerA.id, status: "pending",
+    }, true, "Owner review insert");
+    const selfDecision = await request("/rest/v1/cr_reviews?id=eq." + review.id + "&select=id,status", {
+      token: ownerA.token, method: "PATCH", prefer: "return=representation",
+      body: { status: "approved", reviewed_by: ownerA.id },
+    });
+    assert(!selfDecision.ok || !Array.isArray(selfDecision.data) || selfDecision.data.length === 0,
+      "Review submitter unexpectedly approved their own request");
+    const otherDecision = await request("/rest/v1/cr_reviews?id=eq." + review.id + "&select=id,status", {
+      token: adminA.token, method: "PATCH", prefer: "return=representation",
+      body: { status: "approved", reviewed_by: adminA.id },
+    });
+    assert(otherDecision.ok && Array.isArray(otherDecision.data) && otherDecision.data.length === 1
+      && otherDecision.data[0].status === "approved",
+      "A different authorized reviewer could not approve the request");
+  });
 
   await test("owner can read own organization", async () => {
     const rows = await visibleRows(ownerA, "/rest/v1/cr_organizations?id=eq." + orgA + "&select=id");
