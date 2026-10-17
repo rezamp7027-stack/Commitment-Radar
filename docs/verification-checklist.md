@@ -48,7 +48,7 @@
 - The new Chromium smoke test mocks Supabase and Turnstile; no authenticated browser end-to-end run has been recorded for this candidate.
 - Hosted cross-organization isolation and role permissions remain unverified.
 - Hosting configuration and a live deployment have not been verified.
-- Evidence/dependency management and audit history are implemented in the branch but not yet browser-verified; evidence editing and full audit filtering/pagination are not included.
+- Evidence/dependency management and audit history are implemented on `main` but not yet authenticated-browser-verified; evidence editing and full audit filtering/pagination are not included.
 - The Figma concept exists in a separate file; visual parity has not been checked in a running browser.
 - Canva handoff has an unsaved draft correction; thumbnail preview retrieval returned a Canva 503, so the draft has not been saved pending user review.
 
@@ -73,4 +73,4 @@ Use only the public anon/publishable key in the browser. Never place a service-r
 - [x] Inspected the private authorization helpers: they use `SECURITY DEFINER`, a fixed `search_path = pg_catalog`, and compare membership against `auth.uid()`.
 - [ ] **Release security warning:** Supabase Security Advisor reports leaked-password protection is disabled. Enable it under Supabase Auth password security settings and verify it before launch.
 - [ ] Verify these policies with two distinct authenticated users in a dedicated disposable hosted project. Catalog inspection is not a substitute for adversarial cross-tenant integration tests.
-- [ ] Supabase Performance Advisor reports 21 unused indexes. The tables are empty/new, so do not drop indexes based on this signal alone; re-evaluate after representative workload and query plans exist.
+- [ ] Supabase Performance Advisor reports 19 unused indexes. The tables are empty/new, so do not drop indexes based on this signal alone; re-evaluate after representative workload and query plans exist.
