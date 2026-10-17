@@ -12,11 +12,12 @@ Google OAuth has been cancelled. The main application uses Supabase email/passwo
 
 ## Remaining release gates
 
-1. Confirm the static-contract GitHub Actions workflow passes on the latest `main` commit.
+1. Confirm both static-contract and isolated browser-smoke GitHub Actions jobs pass on the latest `main` commit.
 2. Configure and test email sign-up, confirmation, sign-in, sign-out, and password recovery in the hosted app.
 3. Confirm Supabase Auth CAPTCHA is configured with the correct Cloudflare Turnstile secret; the browser site key is public and is not a secret.
 4. Run hosted browser tests for workspace creation, commitment CRUD, project CRUD, evidence/dependency CRUD, review decisions, and recoverable API errors.
-5. Validate tenant isolation and role restrictions using separate test accounts on a dedicated Commitment Radar test project.
+5. Enable Supabase Auth leaked-password protection; the current Security Advisor reports it disabled.
+6. Validate tenant isolation and role restrictions using separate test accounts on a dedicated Commitment Radar test project.
 
 ## Shared-project safety
 
@@ -27,5 +28,7 @@ The connected Supabase project `htfrixfcirgrhlmwtkjs` has mixed Commitment Radar
 - The deployed UI contains no Google sign-in button or Google OAuth client call.
 - Email/password sign-in, sign-up, CAPTCHA token submission, and password recovery remain present.
 - The retired Edge Function rejects calls and is not referenced by the current frontend.
-- GitHub Actions static contract checks pass.
+- GitHub Actions static contract and isolated browser smoke checks pass on the latest `main` commit.
 - Provider-side Google OAuth is disabled in Supabase Auth settings by an administrator.
+- Supabase Auth leaked-password protection is enabled.
+- Authenticated browser and hosted RLS/tenant-isolation tests pass.
