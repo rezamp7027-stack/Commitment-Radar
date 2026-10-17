@@ -13,7 +13,7 @@ A commitment-tracking product designed to make promises visible, reviewable, and
 - Explicitly scoped project and review queries; mutations require a confirmed returned row before showing success.
 - Explicit loading, empty, error, and mutation-confirmation states.
 - The browser uses a public publishable key. It is not a secret; never replace it with a service-role or secret key.
-- The current implementation branch adds UI refinement, source context, search/sort, edit flow, project management, and review workflow. Browser end-to-end testing and hosted role/tenant isolation remain release gates.
+- `main` includes UI refinement, source context, search/sort, edit flow, project management, review workflow, and an isolated Playwright browser smoke test in CI. The smoke test mocks Supabase and Turnstile; it does not replace authenticated end-to-end or hosted role/tenant-isolation tests.
 - Commitment details now lazily load evidence, dependencies, review history, and the ten most recent permitted audit events. Evidence and dependencies can be added/removed; audit history is read-only. Browser behavior and role-based authorization still require end-to-end verification.
 
 ## Run
@@ -36,7 +36,7 @@ Run local static checks with Node.js 22 or newer:
 node --test tests/static-contract.test.mjs
 ```
 
-Static checks do not replace authenticated browser tests, hosted RLS isolation tests, or a verified deployment. See [the verification checklist](docs/verification-checklist.md).
+The CI browser smoke test runs in Chromium with mocked Supabase Auth and Turnstile to verify the auth UI, mode switching, CAPTCHA gating, and visible auth errors. It does not replace authenticated browser tests, hosted RLS isolation tests, CAPTCHA server-validation tests, or a verified deployment. See [the verification checklist](docs/verification-checklist.md).
 
 ## Security
 
