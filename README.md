@@ -5,7 +5,8 @@ A commitment-tracking product designed to make promises visible, reviewable, and
 ## Current implementation
 
 - Responsive dashboard with workspace selection, summary metrics, commitment status filters, text search, priority filtering, and sorting.
-- Supabase email/password sign-in and sign-up, membership discovery, and workspace creation.
+- Supabase email/password sign-in and sign-up, password recovery, membership discovery, and workspace creation.
+- Authentication is email/password only; Google OAuth is intentionally not part of the product.
 - Commitment create, edit, complete/reopen, delete, project assignment, and source-context display for excerpts and external URLs.
 - Project create/edit/archive/reactivate workflows scoped to the selected workspace.
 - Review request creation, pending-review visibility, and approve/reject decisions with an optional decision note.
