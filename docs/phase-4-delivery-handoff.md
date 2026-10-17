@@ -21,7 +21,7 @@ Google OAuth was cancelled on 2026-10-18. Commitment Radar authentication is ema
 - Confirmed the obsolete Edge Function source was removed and its deployed endpoint was replaced.
 - Parsed the current frontend JavaScript successfully.
 - Added an isolated Playwright Chromium smoke test to CI for the auth screen, email-only mode transitions, CAPTCHA gating, and visible authentication errors. It mocks Supabase and Turnstile and is not a substitute for hosted end-to-end testing.
-- The full Node.js static test suite has not yet been independently executed in this environment; verify the GitHub Actions run for the latest main commit before calling the change fully tested.
+- GitHub Actions ran the static-contract suite successfully on commit `8bcac2b079ecdd96cc38004d7437a108758303a6` and the isolated Chromium smoke test successfully on commit `a4dbef8c4da828f8a7fac7a610fc53468115147f`. The newest commit should be rechecked after queued workflows finish.
 - The Supabase connector does not provide a control to disable the Google provider in Auth settings. An administrator must still disable Google under Authentication → Sign In / Providers to prevent provider-side OAuth outside this app UI.
 
 ## Remaining release work
