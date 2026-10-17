@@ -251,3 +251,10 @@ test('Google OAuth is intentionally absent; email/password auth remains availabl
   assert.match(moduleSource, /signUp\(/);
   assert.match(moduleSource, /resetPasswordForEmail/);
 });
+
+
+test('workspace creation requires a returned organization ID and avoids duplicate refreshes', () => {
+  assert.match(moduleSource, /Workspace creation was not confirmed by the server/);
+  assert.match(moduleSource, /orgId=typeof data==='string'\\?data:data\\.id/);
+  assert.doesNotMatch(moduleSource, /await loadOrganizations\\(\\);if\\(data\\)\\{orgId=data/);
+});
