@@ -1,7 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-const turnstileFunction = readFileSync(new URL('../supabase/functions/verify-turnstile/index.ts', import.meta.url), 'utf8');
 
 const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
 const styles = readFileSync(new URL('../styles.css', import.meta.url), 'utf8');
@@ -214,13 +213,6 @@ test('email authentication passes the server-verified Turnstile token to Supabas
   assert.doesNotMatch(moduleSource, /TURNSTILE_SECRET_KEY\s*=/);
 });
 
-test('Google OAuth sign-in is available and redirects back to the current GitHub Pages path', () => {
-  assert.match(html, /id="googleSignInBtn"/);
-  assert.match(moduleSource, /signInWithOAuth\(\{provider:'google',options:\{redirectTo:window\.location\.origin\+window\.location\.pathname/);
-  assert.match(moduleSource, /queryParams:\{prompt:'select_account'\}/);
-  assert.match(html, /without a separate email-confirmation step/);
-});
-
 test('authentication supports password recovery and resets the CAPTCHA after each attempt', () => {
   assert.match(html, /id="forgotPasswordBtn"/);
   assert.match(moduleSource, /authMode==='recovery'/);
@@ -250,18 +242,12 @@ test('workspace and commitment forms guard duplicate submissions', () => {
 });
 
 
-test('Google OAuth requires a CAPTCHA token and server-side Turnstile verification before redirect', () => {
-  assert.match(moduleSource, /const disabled=busy\|\|!captchaToken\|\|TURNSTILE_SITE_KEY\.startsWith\('REPLACE_'\)\|\|!window\.turnstile/);
-  assert.match(moduleSource, /client\.functions\.invoke\('verify-turnstile',\{body:\{token:captchaToken\}\}\)/);
-  assert.match(moduleSource, /verification\?\.success!==true/);
-  assert.ok(moduleSource.indexOf("client.functions.invoke('verify-turnstile'") < moduleSource.indexOf("client.auth.signInWithOAuth({provider:'google'"), 'CAPTCHA must be verified before OAuth begins');
-  assert.match(turnstileFunction, /Deno\.env\.get\(["']TURNSTILE_SECRET_KEY["']\)/);
-  assert.match(turnstileFunction, /challenges\.cloudflare\.com\/turnstile\/v0\/siteverify/);
-  assert.match(turnstileFunction, /result\.hostname !== ALLOWED_HOSTNAME/);
-  assert.match(turnstileFunction, /req\.headers\.get\(["']origin["']\) !== ALLOWED_ORIGIN/);
-  assert.doesNotMatch(turnstileFunction, /TURNSTILE_SECRET_KEY\s*=\s*['"]/);
-  assert.match(turnstileFunction, /req\.method !== "POST"/);
-  assert.match(turnstileFunction, /token\.length > 2048/);
-  assert.match(turnstileFunction, /if \(!verification\.ok\)/);
-  assert.match(turnstileFunction, /status = 200/);
+
+test('Google OAuth is intentionally absent; email/password auth remains available', () => {
+  assert.doesNotMatch(html, /googleSignInBtn|Continue with Google|Sign in with Google/i);
+  assert.doesNotMatch(moduleSource, /signInWithOAuth|provider:'google'|googleSignInBtn/);
+  assert.match(html, /id="authForm"/);
+  assert.match(moduleSource, /signInWithPassword/);
+  assert.match(moduleSource, /signUp\(/);
+  assert.match(moduleSource, /resetPasswordForEmail/);
 });
