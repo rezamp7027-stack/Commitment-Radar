@@ -65,7 +65,7 @@ async function openIsolatedPage() {
     contentType: 'text/javascript',
     body: `
       window.turnstile = {
-        render(_selector, options) { window.__turnstileOptions = options; setTimeout(() => options.callback('test-captcha-token'), 0); return 1; },
+        render(_selector, options) { window.__turnstileOptions = options; return 1; },
         reset() { if (window.__turnstileOptions) setTimeout(() => window.__turnstileOptions.callback('test-captcha-token'), 0); },
         remove() {}
       };
@@ -80,9 +80,12 @@ test('auth screen renders, Turnstile gates submission, and email-only modes work
   page.on('pageerror', error => pageErrors.push(error.message));
   await page.goto(origin, { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => document.querySelector('#authPanel') && !document.querySelector('#authPanel').classList.contains('hidden'));
-  await page.waitForFunction(() => window.turnstile && window.__turnstileOptions && document.querySelector('#authSubmit').disabled === false);
+  await page.waitForFunction(() => window.turnstile && window.__turnstileOptions);
 
   assert.match(await page.locator('#authTitle').innerText(), /Sign in to Commitment Radar/);
+  assert.equal(await page.locator('#authSubmit').isDisabled(), true, 'auth submission must remain disabled until a CAPTCHA token exists');
+  await page.evaluate(() => window.__turnstileOptions.callback('test-captcha-token'));
+  await page.waitForFunction(() => document.querySelector('#authSubmit').disabled === false);
   assert.equal(await page.locator('#authSubmit').isDisabled(), false);
   assert.equal(await page.getByText(/Continue with Google|Sign in with Google/i).count(), 0);
 
