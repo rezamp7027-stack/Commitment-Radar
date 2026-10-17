@@ -1,7 +1,7 @@
 # Commitment Radar — Verification Checklist
 
 ## Scope and evidence
-- Implementation target: branch `work/phase-4-quality-ui-20261016`, root `index.html`.
+- Current implementation target: `main`, root `index.html`.
 - Backend observed through the Supabase connection: project `htfrixfcirgrhlmwtkjs`.
 - This is a manual/automated test plan. Tests below are not marked passed unless an actual run produced evidence.
 
@@ -24,7 +24,7 @@
 - Priority values match database constraints: `low`, `normal`, `high`, `urgent`.
 - No service-role or secret key pattern is embedded in the frontend.
 - Regression checks cover trimmed title validation, cancelled metrics, auth-listener setup, search/sort wiring, edit/source fields, safe HTTP(S) URLs, project and review contracts, evidence/dependency/audit queries, zero-row mutations, disabled-state preservation, responsive styles, focus, and reduced motion.
-- Latest observed static-contract CI run passed on commit `588c2e851c6327be5b25f267820aa53d8a5c6cf6`: https://github.com/rezamp7027-stack/Commitment-Radar/actions/runs/38945992414. This validates only the automated static-contract suite, not browser or hosted behavior.
+- Static-contract CI passed on `main` commit `4dd15e0aff5692ffd68c9dc185feec341b57949d`; after adding the isolated browser smoke job, the static-contract job also passed on commit `8bcac2b079ecdd96cc38004d7437a108758303a6`. Latest browser smoke execution is tracked in GitHub Actions and must be checked before release. Static contracts and mocked-browser checks do not prove hosted auth or RLS behavior.
 - PostgreSQL contract suite passed on the same candidate run; isolated local Supabase Auth/PostgREST integration is still running on that commit. The local integration suite passed on an earlier candidate commit, but the final run should complete before the PR leaves draft.
 
 ## Required browser and hosted tests — NOT YET VERIFIED
@@ -45,7 +45,7 @@
 
 ## Environment and release blockers
 - The connected Supabase project migration history includes Hashttick migrations as well as Commitment Radar migrations. Do not reset, clean, replay migrations, or change live schema/data while project isolation is unresolved.
-- No authenticated browser end-to-end run has been recorded for this candidate.
+- The new Chromium smoke test mocks Supabase and Turnstile; no authenticated browser end-to-end run has been recorded for this candidate.
 - Hosted cross-organization isolation and role permissions remain unverified.
 - Hosting configuration and a live deployment have not been verified.
 - Evidence/dependency management and audit history are implemented in the branch but not yet browser-verified; evidence editing and full audit filtering/pagination are not included.
@@ -63,6 +63,7 @@ Use only the public anon/publishable key in the browser. Never place a service-r
 - [x] The public Turnstile site key is configured in `app.js` for `rezamp7027-stack.github.io`.
 - [x] User reports enabling Supabase Auth CAPTCHA and saving the Turnstile secret in the dashboard; this dashboard state has not been independently verified. Never commit the secret.
 - [ ] Verify Supabase Auth rejects missing/invalid/expired/replayed tokens in a hosted test.
+- [ ] Enable Supabase Auth leaked-password protection; Security Advisor currently reports this disabled.
 - [ ] Verify SMTP delivery, confirmation redirect, and password-recovery redirect.
 
 
