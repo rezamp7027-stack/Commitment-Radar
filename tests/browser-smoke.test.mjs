@@ -94,6 +94,8 @@ test('auth screen renders, Turnstile gates submission, and email-only modes work
   assert.equal(await page.locator('#passwordField').isVisible(), false);
 
   await page.locator('#toggleAuthMode').click();
+  await page.locator('#toggleAuthMode').click();
+  assert.match(await page.locator('#authTitle').innerText(), /Sign in to Commitment Radar/);
   await page.locator('#email').fill('person@example.test');
   await page.locator('#password').fill('wrong-password');
   await page.locator('#authSubmit').click();
