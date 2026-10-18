@@ -7,6 +7,8 @@
 - Eight application tables use the isolated `cr_*` prefix and have RLS enabled.
 - Authorization is tenant-scoped through organization membership and roles.
 - Latest row-count inspection found one organization, one membership, one commitment, and two audit events. Other Commitment Radar application tables were empty; preserve these existing records.
+- Current live migration history contains four Commitment Radar migrations, including audit-trigger hardening and the organization-cascade guard.
+- Organization-cascade guard migration: `commitment-radar/supabase/migrations/20261018100502_commitment_radar_audit_cascade_guard.sql`.
 - The applied migration is recorded in Supabase as `20261015120014_commitment_radar_backend_hardening`.
 - Its source is stored under `commitment-radar/supabase/migrations/20261015120014_commitment_radar_backend_hardening.sql`.
 
