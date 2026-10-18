@@ -49,6 +49,9 @@ The CI browser smoke test runs in Chromium with mocked Supabase Auth and Turnsti
 - Confirm that zero-row updates/deletes and authorization errors are shown honestly; never show success until the server confirms the mutation.
 
 ## Engineering documentation
+- [Product plan](docs/product-plan-2026-10-18.md)
+- [Product KPIs and data quality](docs/product-kpis.md)
+- [Plan & Ship delivery handoff](docs/plan-and-ship-2026-10-18.md)
 
 - [Architecture](docs/architecture.md)
 - [Stage 3 delivery plan](docs/stage-3-delivery-plan.md)
