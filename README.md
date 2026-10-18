@@ -61,7 +61,7 @@ The CI browser smoke test runs in Chromium with mocked Supabase Auth and Turnsti
 
 ## Design direction
 
-The current UI uses a cool-gray canvas, white surfaces, navy typography, blue primary actions, explicit semantic status labels, visible keyboard focus, responsive layouts, and reduced-motion support. The companion Figma concept is [Commitment Radar — Phase 4 UI Refinement](https://www.figma.com/design/cQoWTowRsC5NkTpabUb4L0). Canva's existing handoff has an unsaved draft correction to its stale status and next-step wording. Canva's thumbnail preview endpoint returned a 503, so it has not been saved or treated as synchronized.
+The current UI uses a cool-gray canvas, white surfaces, navy typography, blue primary actions, explicit semantic status labels, visible keyboard focus, responsive layouts, and reduced-motion support. The implementation-matched screen is in [Commitment Radar — Phase 4 UI Refinement](https://www.figma.com/design/cQoWTowRsC5NkTpabUb4L0) on the **Current Implementation** page. The original multi-screen concept and synchronized token library remain in [Product UI & Design System](https://www.figma.com/design/CueLiOMpV0m7OY7BEYEFcs). The same CSS token names are now represented in both Figma libraries. Canva's existing handoff has an unsaved draft correction to its stale status and next-step wording. Canva's thumbnail preview endpoint returned a 503, so it has not been saved or treated as synchronized.
 
 
 ## Email authentication and CAPTCHA setup
