@@ -37,7 +37,68 @@ END;
 $assert_owner_isolation$;
 
 INSERT INTO public.cr_projects (organization_id, name, created_by)
-VALUES (current_setting('test.cr_org_a')::uuid, 'Owner-created project', auth.uid());
+VALUES (current_setting('test.cr_org_a')::uuid, 'Owner-created project', auth.uid())
+RETURNING id AS project_a \gset
+SELECT set_config('test.cr_project_a', :'project_a', true);
+
+DO $assert_organization_owner_immutable$
+BEGIN
+  BEGIN
+    UPDATE public.cr_organizations
+    SET owner_id = '10000000-0000-0000-0000-000000000002'
+    WHERE id = current_setting('test.cr_org_a')::uuid;
+    RAISE EXCEPTION 'Organization owner_id unexpectedly changed';
+  EXCEPTION
+    WHEN insufficient_privilege THEN NULL;
+  END;
+END;
+$assert_organization_owner_immutable$;
+
+-- Add the same actor to a second tenant so the RLS policy alone would permit
+-- a tenant reassignment. The database guard must still reject the mutation.
+RESET ROLE;
+INSERT INTO public.cr_memberships (organization_id, user_id, role)
+VALUES (current_setting('test.cr_org_b')::uuid, '10000000-0000-0000-0000-000000000001', 'editor');
+SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claim.sub', '10000000-0000-0000-0000-000000000001', true);
+
+DO $assert_tenant_id_immutable$
+BEGIN
+  BEGIN
+    UPDATE public.cr_projects
+    SET organization_id = current_setting('test.cr_org_b')::uuid
+    WHERE id = current_setting('test.cr_project_a')::uuid;
+    RAISE EXCEPTION 'Project organization_id unexpectedly changed';
+  EXCEPTION
+    WHEN insufficient_privilege THEN NULL;
+  END;
+
+  BEGIN
+    UPDATE public.cr_projects
+    SET created_by = '10000000-0000-0000-0000-000000000002'
+    WHERE id = current_setting('test.cr_project_a')::uuid;
+    RAISE EXCEPTION 'Project created_by unexpectedly changed';
+  EXCEPTION
+    WHEN insufficient_privilege THEN NULL;
+  END;
+END;
+$assert_tenant_id_immutable$;
+
+UPDATE public.cr_projects
+SET name = 'Project title can still be edited'
+WHERE id = current_setting('test.cr_project_a')::uuid;
+
+DO $assert_valid_update_still_works$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM public.cr_projects
+    WHERE id = current_setting('test.cr_project_a')::uuid
+      AND name = 'Project title can still be edited'
+  ) THEN
+    RAISE EXCEPTION 'Allowed project content update was blocked';
+  END IF;
+END;
+$assert_valid_update_still_works$;
 
 SELECT public.cr_create_organization('Created through public RPC') AS rpc_org \gset
 SELECT set_config('test.cr_rpc_org', :'rpc_org', true);
