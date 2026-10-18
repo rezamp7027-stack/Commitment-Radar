@@ -50,4 +50,4 @@
 - No service-role key in the browser.
 - No deletion of the live project, auth users, tables, or records.
 - No claim of production readiness without hosted browser and Auth/RLS evidence.
-- Resend/React Email integration is not enabled: there is no verified sending domain or configured provider secret in the current project. Do not send real emails or add provider credentials without setup and verification.
+- Resend/React Email integration is not enabled: a verified sending domain and provider configuration could not be confirmed through the available connector. Do not send real emails or add provider credentials without setup and verification.
