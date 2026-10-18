@@ -15,7 +15,8 @@
 - Live migration history contains three Commitment Radar migrations, including audit-trigger hardening.
 - The audit-trigger hardening migration is applied live and is now being tracked under its observed migration version in the repository.
 - The connected Supabase organization is still named **Hashttick**. The available connector does not expose organization rename or project-transfer operations.
-- Figma had no local variable collections; a Commitment Radar token collection was created and matching dashboard paints were bound to those variables.
+- The Phase 4 Figma file `cQoWTowRsC5NkTpabUb4L0` now has a `Commitment Radar` token collection and an editable `Current Implementation` screen; matching dashboard paints were bound to its tokens.
+- The original multi-screen Figma file `CueLiOMpV0m7OY7BEYEFcs` already had a 27-variable `Commitment Radar Tokens` collection. Its colors, scopes, CSS code syntax, and design-system hex labels were synchronized; 635 Product UI paints and 109 Design System paints were bound to shared variables.
 - Canva handoff documents contain stale statements about no frontend and mixed migration history. Draft corrections are being prepared and require approval before saving.
 - Auth security still has a Supabase Advisor warning for leaked-password protection being disabled. The available connected tools do not expose this Auth setting.
 
