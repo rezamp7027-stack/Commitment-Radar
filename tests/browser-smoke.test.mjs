@@ -66,7 +66,7 @@ async function openIsolatedPage() {
     body: `
       window.turnstile = {
         render(_selector, options) { window.__turnstileOptions = options; return 1; },
-        reset() { if (window.__turnstileOptions) setTimeout(() => window.__turnstileOptions.callback('test-captcha-token'), 0); },
+        reset() {},
         remove() {}
       };
     `,
@@ -90,14 +90,19 @@ test('auth screen renders, Turnstile gates submission, and email-only modes work
   assert.equal(await page.getByText(/Continue with Google|Sign in with Google/i).count(), 0);
 
   await page.locator('#toggleAuthMode').click();
+  await page.evaluate(() => window.__turnstileOptions.callback('test-captcha-token'));
   assert.match(await page.locator('#authTitle').innerText(), /Create your account/);
   await page.locator('#toggleAuthMode').click();
+  await page.evaluate(() => window.__turnstileOptions.callback('test-captcha-token'));
   await page.locator('#forgotPasswordBtn').click();
+  await page.evaluate(() => window.__turnstileOptions.callback('test-captcha-token'));
   assert.match(await page.locator('#authTitle').innerText(), /Reset your password/);
   assert.equal(await page.locator('#passwordField').isVisible(), false);
 
   await page.locator('#toggleAuthMode').click();
+  await page.evaluate(() => window.__turnstileOptions.callback('test-captcha-token'));
   await page.locator('#toggleAuthMode').click();
+  await page.evaluate(() => window.__turnstileOptions.callback('test-captcha-token'));
   assert.match(await page.locator('#authTitle').innerText(), /Sign in to Commitment Radar/);
   await page.locator('#email').fill('person@example.test');
   await page.locator('#password').fill('wrong-password');
