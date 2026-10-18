@@ -28,7 +28,7 @@ Open the site → connect to the configured Supabase project → sign in or crea
 | P-06 | Protect organization data | Must | RLS enabled on all eight tables; security contract and multi-tenant integration tests pass | Live RLS observed; fresh CI and hosted disposable test open |
 | P-07 | Keep code and design tokens aligned | Should | CSS variables match Figma variables and key dashboard fills/strokes are token-bound | Token collection created and bound |
 | P-08 | Provide truthful product measurement | Later | KPI definitions have explicit denominators and no fabricated baseline | Defined in \`docs/product-kpis.md\`; instrumentation not implemented |
-| P-09 | Reliable transactional email | Later | Verified sender domain, SMTP/provider configuration, templates, retry behavior, and delivery checks exist | Not enabled; Resend has no verified sending domains |
+| P-09 | Reliable transactional email | Later | Verified sender domain, SMTP/provider configuration, templates, retry behavior, and delivery checks exist | Not enabled; a verified sending domain was not confirmed through the available connector |
 
 ## Experience and states
 
