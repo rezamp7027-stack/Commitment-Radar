@@ -111,6 +111,31 @@ BEGIN
 
   IF has_function_privilege('anon', 'public.cr_log_commitment_change()', 'EXECUTE')
      OR has_function_privilege('authenticated', 'public.cr_log_commitment_change()', 'EXECUTE')
+     OR EXISTS (
+       SELECT 1
+       FROM pg_proc p
+       CROSS JOIN LATERAL aclexplode(COALESCE(p.proacl, acldefault('f', p.proowner))) AS acl
+       WHERE p.oid = 'public.cr_log_commitment_change()'::regprocedure
+         AND acl.grantee = 0
+         AND acl.privilege_type = 'EXECUTE'
+     ) THEN
+    RAISE EXCEPTION 'Audit trigger function must not be directly executable by API roles or PUBLIC';
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_proc p
+    JOIN pg_namespace n ON n.oid = p.pronamespace
+    WHERE n.nspname = 'public'
+      AND p.proname = 'cr_log_commitment_change'
+      AND p.prosecdef
+      AND p.proconfig @> ARRAY['search_path=pg_catalog']
+  ) THEN
+    RAISE EXCEPTION 'Audit trigger must be SECURITY DEFINER with a fixed pg_catalog search_path';
+  END IF;
+
+  IF has_function_privilege('anon', 'public.cr_log_commitment_change()', 'EXECUTE')
+     OR has_function_privilege('authenticated', 'public.cr_log_commitment_change()', 'EXECUTE')
      OR has_function_privilege('public', 'public.cr_log_commitment_change()', 'EXECUTE') THEN
     RAISE EXCEPTION 'Audit trigger function must not be directly executable by API roles';
   END IF;
