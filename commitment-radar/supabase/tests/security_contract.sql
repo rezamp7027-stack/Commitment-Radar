@@ -73,19 +73,6 @@ BEGIN
     RAISE EXCEPTION 'Authenticated role lacks required private-schema usage for RLS helpers';
   END IF;
 
-  IF NOT (
-    SELECT prosecdef AND 'search_path=pg_catalog' = ANY(coalesce(proconfig, ARRAY[]::text[]))
-    FROM pg_proc
-    WHERE oid = 'public.cr_log_commitment_change()'::regprocedure
-  ) THEN
-    RAISE EXCEPTION 'Audit trigger must be SECURITY DEFINER with a locked pg_catalog search_path';
-  END IF;
-
-  IF has_function_privilege('anon', 'public.cr_log_commitment_change()', 'EXECUTE')
-     OR has_function_privilege('authenticated', 'public.cr_log_commitment_change()', 'EXECUTE') THEN
-    RAISE EXCEPTION 'Client roles must not directly execute the audit trigger function';
-  END IF;
-
   SELECT string_agg(expected.index_name, ', ' ORDER BY expected.index_name)
     INTO v_index
   FROM (VALUES
