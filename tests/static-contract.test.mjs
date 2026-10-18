@@ -15,9 +15,10 @@ test('browser module parses as an async function body', () => {
   assert.doesNotThrow(() => new Function(`return async function(){\n${moduleSource}\n}`));
 });
 
-test('frontend defaults to the intended Supabase project with a public key', () => {
-  assert.match(moduleSource, /https:\/\/htfrixfcirgrhlmwtkjs\.supabase\.co/);
-  assert.match(moduleSource, /sb_publishable_[A-Za-z0-9_-]+/);
+test('frontend does not default to the shared Hashttick Supabase project', () => {
+  assert.doesNotMatch(moduleSource, /https:\/\/htfrixfcirgrhlmwtkjs\.supabase\.co/);
+  assert.match(moduleSource, /BLOCKED_SHARED_PROJECT_HOST='htfrixfcirgrhlmwtkjs\.supabase\.co'/);
+  assert.match(moduleSource, /localStorage\.removeItem\(CONFIG_KEY\);return null/);
   assert.doesNotMatch(moduleSource, /sb_secret_[A-Za-z0-9_-]+/);
 });
 
