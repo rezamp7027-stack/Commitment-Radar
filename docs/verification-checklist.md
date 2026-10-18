@@ -2,7 +2,7 @@
 
 ## Scope and evidence
 - Current implementation target: `main`, root `index.html`.
-- Backend observed through the Supabase connection: project `htfrixfcirgrhlmwtkjs`.
+- Former backend project `htfrixfcirgrhlmwtkjs` is shared with Hashttick and is explicitly blocked by the frontend; it is read-only audit evidence, not a target for Commitment Radar writes.
 - This is a manual/automated test plan. Tests below are not marked passed unless an actual run produced evidence.
 
 ## Implemented in the browser client
@@ -60,14 +60,14 @@ Use only the public anon/publishable key in the browser. Never place a service-r
 - [x] Frontend includes an explicit Cloudflare Turnstile widget and token lifecycle.
 - [x] Sign-in, sign-up, and password-recovery requests pass the token to Supabase Auth.
 - [x] Password recovery uses a non-enumerating success message, an explicit redirect URL, and a password-update screen after the recovery callback.
-- [x] The public Turnstile site key is configured in `app.js` for `rezamp7027-stack.github.io`.
+- [x] The public Turnstile site key is configured in `app.js` for `rezamp7027-stack.github.io`.\n- [x] The frontend no longer defaults to the shared Hashttick Supabase project and clears its legacy browser-stored connection.\n- [ ] Create/select a dedicated Commitment Radar Supabase project and apply only the reviewed Commitment Radar schema migrations.
 - [x] User reports enabling Supabase Auth CAPTCHA and saving the Turnstile secret in the dashboard; this dashboard state has not been independently verified. Never commit the secret.
 - [ ] Verify Supabase Auth rejects missing/invalid/expired/replayed tokens in a hosted test.
 - [ ] Enable Supabase Auth leaked-password protection; Security Advisor currently reports this disabled.
 - [ ] Verify SMTP delivery, confirmation redirect, and password-recovery redirect.
 
 
-## Live Supabase audit findings (read-only inspection on 2026-10-16)
+## Former shared Supabase audit findings (read-only inspection on 2026-10-18)
 - [x] Confirmed all eight `public.cr_*` tables have RLS enabled.
 - [x] Inspected current table policies: reads are membership-scoped through `private.cr_is_member`; writes use role checks through `private.cr_can_edit`/ `private.cr_can_manage`, and review decisions prevent submitters from reviewing their own requests.
 - [x] Inspected the private authorization helpers: they use `SECURITY DEFINER`, a fixed `search_path = pg_catalog`, and compare membership against `auth.uid()`.
