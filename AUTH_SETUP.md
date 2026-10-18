@@ -20,7 +20,7 @@ Commitment Radar uses Supabase email/password authentication only. Google OAuth 
 - Test sign-in, sign-up, email confirmation, and password recovery in the hosted app.
 - Verify missing, invalid, expired, and reused CAPTCHA tokens fail closed when CAPTCHA is enabled.
 - Test organization isolation and role restrictions with separate test accounts against a dedicated test project.
-- The retained project `htfrixfcirgrhlmwtkjs` is approved for Commitment Radar. Latest inspection found eight `cr_*` tables with RLS enabled and three Commitment Radar migrations. Do not reset it or use it for destructive tests.
+- The retained project `htfrixfcirgrhlmwtkjs` is approved for Commitment Radar. Latest inspection found eight `cr_*` tables with RLS enabled and four Commitment Radar migrations. Do not reset it or use it for destructive tests.
 - The Supabase organization is still named **Hashttick**. The connected tools do not expose organization rename/transfer controls; complete that administrative separation in the Supabase Dashboard if the organization itself must be renamed or moved.
 
 Google OAuth and the former `verify-turnstile` OAuth-gating Edge Function are not part of this release path.
