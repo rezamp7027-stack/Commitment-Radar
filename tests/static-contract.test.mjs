@@ -20,7 +20,7 @@ test('CSS exposes the shared Commitment Radar design tokens', () => {
     '--cr-color-status-warning', '--cr-color-status-danger',
     '--cr-space-1', '--cr-space-6', '--cr-radius-small', '--cr-radius-large'
   ]) assert.match(styles, new RegExp(token + ':'));
-  assert.match(styles, /--blue:var\\(--cr-color-brand-primary\\)/);
+  assert.match(styles, /--blue:var\(--cr-color-brand-primary\)/);
 });
 
 test('browser module parses as an async function body', () => {
