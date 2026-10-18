@@ -12,6 +12,17 @@ const moduleSource = readFileSync(new URL('../app.js', import.meta.url), 'utf8')
 assert.match(html, /<link rel="stylesheet" href="\.\/styles\.css">/);
 assert.match(html, /<script type="module" src="\.\/app\.js"><\/script>/);
 
+test('CSS exposes the shared Commitment Radar design tokens', () => {
+  for (const token of [
+    '--cr-color-brand-primary', '--cr-color-navigation-navy', '--cr-color-canvas',
+    '--cr-color-surface', '--cr-color-text-primary', '--cr-color-text-muted',
+    '--cr-color-border-default', '--cr-color-status-success',
+    '--cr-color-status-warning', '--cr-color-status-danger',
+    '--cr-space-1', '--cr-space-6', '--cr-radius-small', '--cr-radius-large'
+  ]) assert.match(styles, new RegExp(token + ':'));
+  assert.match(styles, /--blue:var\\(--cr-color-brand-primary\\)/);
+});
+
 test('browser module parses as an async function body', () => {
   assert.doesNotThrow(() => new Function(`return async function(){\n${moduleSource}\n}`));
 });
