@@ -24,9 +24,11 @@ Sign in or create an account. If email confirmation is enabled, confirm the addr
 
 The page imports Supabase JS v2 from `https://esm.sh/@supabase/supabase-js@2`; internet access to that CDN is required. A user-provided public configuration override is stored in this browser's local storage. Supabase session persistence is handled by the Supabase client.
 
-## Important environment warning
+## Supabase project scope and isolation
 
-The connected Supabase project currently has migration history that includes both Commitment Radar migrations and migrations for another application (Hashttick). Do **not** reset, clean up, replay migrations, or make schema/data changes on that shared project as part of this work. Before hosted verification or production release, establish whether the shared project is intentional and use a dedicated disposable Commitment Radar test project for tenant-isolation testing.
+The owner has explicitly approved retaining Supabase project `htfrixfcirgrhlmwtkjs` for Commitment Radar. The latest live inspection found eight `public.cr_*` tables, RLS enabled on all eight, and three recorded Commitment Radar migrations. A targeted scan found no Hashttick-named public routines, policies, or storage buckets. This is evidence about the inspected database objects, not proof that the Supabase organization has been renamed or transferred.
+
+The project is still listed inside the Supabase organization named **Hashttick**. The available connected tools do not support renaming that organization or transferring the project. Do not reset the database, replay baseline migrations, or delete provider-side resources to simulate separation. Use an isolated disposable project for destructive integration tests; organization ownership/renaming remains an administrative task in Supabase Dashboard.
 
 ## Verification
 
