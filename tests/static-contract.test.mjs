@@ -18,7 +18,7 @@ test('CSS exposes the shared Commitment Radar design tokens', () => {
     '--cr-color-surface', '--cr-color-text-primary', '--cr-color-text-muted',
     '--cr-color-border-default', '--cr-color-status-success',
     '--cr-color-status-warning', '--cr-color-status-danger',
-    '--cr-space-1', '--cr-space-6', '--cr-radius-small', '--cr-radius-large'
+    '--cr-color-status-success-bg', '--cr-color-status-warning-bg', '--cr-color-status-danger-bg', '--cr-color-status-info', '--cr-color-status-info-bg', '--cr-color-status-review', '--cr-space-half', '--cr-space-1', '--cr-space-6', '--cr-radius-small', '--cr-radius-large', '--cr-radius-full'
   ]) assert.match(styles, new RegExp(token + ':'));
   assert.match(styles, /--blue:var\(--cr-color-brand-primary\)/);
 });
