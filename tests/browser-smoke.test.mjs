@@ -43,6 +43,7 @@ after(async () => {
 
 async function openIsolatedPage() {
   const context = await browser.newContext();
+  await context.addInitScript(() => localStorage.setItem('commitment-radar-supabase-public-config-v1', JSON.stringify({ url: 'https://isolated-test.supabase.co', key: 'sb_publishable_test_key_12345678901234567890' })));
   const page = await context.newPage();
   await page.route('https://esm.sh/@supabase/supabase-js@2', route => route.fulfill({
     status: 200,
