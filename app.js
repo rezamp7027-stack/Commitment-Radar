@@ -4,7 +4,7 @@ const CONFIG_KEY='commitment-radar-supabase-public-config-v1';
 // Replace with the public Cloudflare Turnstile site key; never put its secret in client code.
 const TURNSTILE_SITE_KEY='0x4AAAAAAFYsoPyExWjpmUhD';
 let captchaToken=null,captchaWidgetId=null,captchaLoading=false,passwordRecoveryPending=false;
-const DEFAULT_CONFIG={url:'https://htfrixfcirgrhlmwtkjs.supabase.co',key:'sb_publishable_pgnE6MaOYJCSvNiSt2h7SA_SN57UyK6'};
+const BLOCKED_SHARED_PROJECT_HOST='htfrixfcirgrhlmwtkjs.supabase.co';
 let client=null,user=null,orgs=[],orgId=null,commitments=[],projects=[],reviews=[],filter='all',authMode='signin',busy=false,editingId=null,editingProjectId=null,searchQuery='',priorityFilter='all',sortOrder='due';
 function canEdit(){return ['owner','admin','editor'].includes(orgs.find(o=>o.id===orgId)?.role)}
 function applyRolePermissions(){const allowed=canEdit();const newCommit=$('toggleForm'),newProject=$('toggleProjectForm'),commitSave=$('commitForm')?.querySelector('button[type="submit"]'),projectSave=$('projectForm')?.querySelector('button[type="submit"]');for(const b of [newCommit,newProject,commitSave,projectSave])if(b){b.dataset.permissionDisabled=String(!allowed);b.disabled=busy||!allowed}}
@@ -13,7 +13,7 @@ const hide=id=>$(id).classList.add('hidden');
 const errText=e=>{const m=e?.message||'Unexpected error';return m.length>240?m.slice(0,237)+'…':m};
 function authErrorText(e){const code=String(e?.code||'').toLowerCase(),message=String(e?.message||'');if(code==='over_email_send_rate_limit'||/email rate limit exceeded/i.test(message))return 'Supabase has temporarily blocked confirmation emails because the project email-send limit was exceeded. Do not keep retrying. Wait for the limit window to reset, or configure custom SMTP in Supabase Auth. If you already have a confirmed account, use Sign in.';if(/email address not authorized/i.test(message))return 'Supabase’s built-in email sender only sends to authorized team addresses. Configure custom SMTP in Supabase Auth to send confirmation emails to other addresses.';return errText(e)}
 function setTag(text){$('connectionTag').textContent=text}
-function cfg(){try{return JSON.parse(localStorage.getItem(CONFIG_KEY)||'null')||DEFAULT_CONFIG}catch{return DEFAULT_CONFIG}}
+function cfg(){try{const c=JSON.parse(localStorage.getItem(CONFIG_KEY)||'null');if(c?.url){try{if(new URL(c.url).hostname.toLowerCase()===BLOCKED_SHARED_PROJECT_HOST){localStorage.removeItem(CONFIG_KEY);return null}}catch{}}return c}catch{return null}}
 function saveCfg(c){localStorage.setItem(CONFIG_KEY,JSON.stringify(c))}
 function validCfg(c){return c&&/^https:\/\/[a-zA-Z0-9.-]+$/.test(c.url)&&typeof c.key==='string'&&c.key.length>20}
 function showOnlyAuth(){ $('authPanel').classList.remove('hidden');$('workspacePanel').classList.add('hidden');$('settingsPanel').classList.remove('open');$('authTitle').textContent=authMode==='signin'?'Sign in to Commitment Radar':authMode==='signup'?'Create your account':'Reset your password';$('authSubmit').textContent=authMode==='signin'?'Sign in':authMode==='signup'?'Create account':'Send reset link';$('toggleAuthMode').textContent=authMode==='signup'?'I already have an account':'Create account';$('passwordField').classList.toggle('hidden',authMode==='recovery');$('password').required=authMode!=='recovery';$('forgotPasswordBtn').classList.toggle('hidden',authMode!=='signin');syncAuthSubmit();setupCaptcha();}
@@ -24,7 +24,7 @@ function resetCaptcha(){captchaToken=null;if(captchaWidgetId!==null&&window.turn
 function setBusy(v){busy=v;document.querySelectorAll('button').forEach(b=>{if(['settingsBtn','closeSettings'].includes(b.id))return;b.disabled=v||b.dataset.permissionDisabled==='true'||b.dataset.workspaceDisabled==='true'});syncAuthSubmit()}
 async function init(){
  const c=cfg();
- if(!validCfg(c)){setTag('SUPABASE · NOT CONFIGURED');$('settingsPanel').classList.add('open');$('projectUrl').value=c?.url||'https://htfrixfcirgrhlmwtkjs.supabase.co';$('anonKey').value=c?.key||'';return}
+ if(!validCfg(c)){setTag('SUPABASE · NOT CONFIGURED');$('settingsPanel').classList.add('open');$('projectUrl').value=c?.url||'';$('anonKey').value=c?.key||'';return}
  try{client=createClient(c.url,c.key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});client.auth.onAuthStateChange((event,session)=>{if(event==='PASSWORD_RECOVERY'){passwordRecoveryPending=true;showPasswordUpdate()}if(event==='SIGNED_OUT'){passwordRecoveryPending=false;user=null;orgs=[];commitments=[];$('workspacePanel').classList.add('hidden');$('passwordUpdatePanel').classList.add('hidden');showOnlyAuth()}});setTag('SUPABASE · CONNECTED');const {data,error}=await client.auth.getSession();if(error)throw error;if(data.session){user=data.session.user;if(passwordRecoveryPending||window.location.hash.includes('type=recovery'))showPasswordUpdate();else await enterApp()}else{showOnlyAuth()}}catch(e){client=null;setTag('CONNECTION · ERROR');$('settingsPanel').classList.add('open');show('settingsStatus','Could not connect: '+errText(e),'error')}
 }
 $('settingsBtn').addEventListener('click',()=>$('settingsPanel').classList.toggle('open'));
