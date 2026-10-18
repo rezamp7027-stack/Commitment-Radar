@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 
 const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
 const styles = readFileSync(new URL('../styles.css', import.meta.url), 'utf8');
+const auditMigration = readFileSync(new URL('../commitment-radar/supabase/migrations/20261018094039_commitment_radar_audit_trigger_hardening.sql', import.meta.url), 'utf8');
 const moduleSource = readFileSync(new URL('../app.js', import.meta.url), 'utf8').replace(
   /import\s+\{\s*createClient\s*\}\s+from\s+['"][^'"]+['"];\s*/,
   ''
@@ -34,6 +35,12 @@ test('status and priority values match the inspected database constraints', () =
   assert.match(moduleSource, /const status=done\?'done':'open'/);
   assert.match(html, /value="urgent">Urgent/);
   assert.doesNotMatch(html, /value="critical">Critical/);
+});
+
+test('audit trigger hardening migration fixes search_path and blocks direct execution', () => {
+  assert.match(auditMigration, /SECURITY DEFINER[\\s\\S]*SET search_path = pg_catalog/i);
+  assert.match(auditMigration, /REVOKE ALL ON FUNCTION public\\.cr_log_commitment_change\\(\\) FROM PUBLIC, anon, authenticated/i);
+  assert.match(auditMigration, /INSERT INTO public\\.cr_audit_events/i);
 });
 
 test('no privileged Supabase key pattern is embedded in the frontend', () => {
