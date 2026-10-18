@@ -21,7 +21,7 @@ Google OAuth has been cancelled. The main application uses Supabase email/passwo
 
 ## Shared-project safety
 
-The owner has approved retaining Supabase project `htfrixfcirgrhlmwtkjs` for Commitment Radar. Latest inspection found eight `cr_*` tables with RLS enabled and three Commitment Radar migrations; targeted scans found no Hashttick-named public routines, policies, or storage buckets. Preserve the existing organization, membership, commitment, and audit-event records. Do not reset the project or perform destructive testing against it. The project remains in the Supabase organization named **Hashttick**; moving/renaming the organization requires an administrative dashboard action. The retired `verify-turnstile` Edge Function returns HTTP 410 and is not called by the current frontend.
+The owner has approved retaining Supabase project `htfrixfcirgrhlmwtkjs` for Commitment Radar. Latest inspection found eight `cr_*` tables with RLS enabled and four Commitment Radar migrations; targeted scans found no Hashttick-named public routines, policies, or storage buckets. Preserve the existing organization, membership, commitment, and audit-event records. Do not reset the project or perform destructive testing against it. The project remains in the Supabase organization named **Hashttick**; moving/renaming the organization requires an administrative dashboard action. The retired `verify-turnstile` Edge Function returns HTTP 410 and is not called by the current frontend.
 
 ## Acceptance criteria
 
