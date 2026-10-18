@@ -38,9 +38,9 @@ test('status and priority values match the inspected database constraints', () =
 });
 
 test('audit trigger hardening migration fixes search_path and blocks direct execution', () => {
-  assert.match(auditMigration, /SECURITY DEFINER[\\s\\S]*SET search_path = pg_catalog/i);
-  assert.match(auditMigration, /REVOKE ALL ON FUNCTION public\\.cr_log_commitment_change\\(\\) FROM PUBLIC, anon, authenticated/i);
-  assert.match(auditMigration, /INSERT INTO public\\.cr_audit_events/i);
+  assert.match(auditMigration, /SECURITY DEFINER[\s\S]*SET search_path = pg_catalog/i);
+  assert.match(auditMigration, /REVOKE ALL ON FUNCTION public\.cr_log_commitment_change\(\) FROM PUBLIC, anon, authenticated/i);
+  assert.match(auditMigration, /INSERT INTO public\.cr_audit_events/i);
 });
 
 test('no privileged Supabase key pattern is embedded in the frontend', () => {
