@@ -48,4 +48,4 @@ The diagram describes the intended and inspected database flow; it is not a runt
 
 ## Verification
 
-The companion `supabase/tests/security_contract.sql` checks table existence, RLS enablement, helper placement, RPC grants, wrapper security mode, and all fourteen supporting indexes. Supabase security advisor returned no findings after the migration. Performance advisor returned no unindexed foreign keys; it still reports unused-index INFO findings because the Commitment Radar tables have not yet received workload.
+The companion `supabase/tests/security_contract.sql` checks table existence, RLS enablement, helper placement, RPC grants, wrapper security mode, and all fourteen supporting indexes. The current Security Advisor still reports leaked-password protection disabled; the available connector does not expose the Auth setting needed to enable it. Performance advisor returned no unindexed foreign keys; it still reports unused-index INFO findings because the Commitment Radar tables have not yet received workload.
