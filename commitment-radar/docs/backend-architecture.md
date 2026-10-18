@@ -6,7 +6,7 @@
 - The project is still in the Supabase organization named **Hashttick**; the connected tools do not expose organization rename/transfer controls.
 - Eight application tables use the isolated `cr_*` prefix and have RLS enabled.
 - Authorization is tenant-scoped through organization membership and roles.
-- The application data tables are currently empty; no customer data was modified during hardening.
+- Latest row-count inspection found one organization, one membership, one commitment, and two audit events. Other Commitment Radar application tables were empty; preserve these existing records.
 - The applied migration is recorded in Supabase as `20261015120014_commitment_radar_backend_hardening`.
 - Its source is stored under `commitment-radar/supabase/migrations/20261015120014_commitment_radar_backend_hardening.sql`.
 
