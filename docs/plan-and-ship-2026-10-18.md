@@ -3,6 +3,7 @@
 **Snapshot date:** 2026-10-18  
 **Repository:** `rezamp7027-stack/Commitment-Radar`  
 **Implementation branch:** `release/commitment-radar-hardening-20261018`  
+**Pull request:** https://github.com/rezamp7027-stack/Commitment-Radar/pull/9  
 **Live Supabase project:** `htfrixfcirgrhlmwtkjs`  
 **Owner decision:** Preserve the existing Commitment Radar database and records; remove only verified Hashttick-specific dependencies. Do not reset or delete the project.
 
