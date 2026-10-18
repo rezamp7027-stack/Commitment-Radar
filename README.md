@@ -18,7 +18,7 @@ A commitment-tracking product designed to make promises visible, reviewable, and
 
 ## Run
 
-Serve root `index.html` over HTTPS or a local static web server. The page is preconfigured with a Supabase URL and public publishable key. Open **Connection** only to change the project URL/key. Use a public anon/publishable key only.
+Serve root `index.html` over HTTPS or a local static web server. The page does not ship with a live Supabase project configured. Open **Connection** and enter the URL and public publishable key from a dedicated Commitment Radar Supabase project. Use a public anon/publishable key only. The app actively rejects the previously shared Hashttick project.
 
 Sign in or create an account. If email confirmation is enabled, confirm the address before signing in. Create a workspace if the account has no memberships.
 
@@ -26,7 +26,7 @@ The page imports Supabase JS v2 from `https://esm.sh/@supabase/supabase-js@2`; i
 
 ## Important environment warning
 
-The connected Supabase project currently has migration history that includes both Commitment Radar migrations and migrations for another application (Hashttick). Do **not** reset, clean up, replay migrations, or make schema/data changes on that shared project as part of this work. Before hosted verification or production release, establish whether the shared project is intentional and use a dedicated disposable Commitment Radar test project for tenant-isolation testing.
+The former Supabase project `htfrixfcirgrhlmwtkjs` is shared with Hashttick and must not be used by Commitment Radar. The browser client now blocks this project, including a legacy browser-stored configuration. No schema or data changes should be made there. A dedicated Supabase project must be created and initialized from reviewed Commitment Radar migrations before hosted verification or production release.
 
 ## Verification
 
