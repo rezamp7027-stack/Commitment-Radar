@@ -2,10 +2,13 @@
 
 ## Verified current state
 
-- Supabase project: `htfrixfcirgrhlmwtkjs` (linked as Hashttick).
+- Supabase project: `htfrixfcirgrhlmwtkjs`, explicitly retained for Commitment Radar by the owner.
+- The project is still in the Supabase organization named **Hashttick**; the connected tools do not expose organization rename/transfer controls.
 - Eight application tables use the isolated `cr_*` prefix and have RLS enabled.
 - Authorization is tenant-scoped through organization membership and roles.
-- The application data tables are currently empty; no customer data was modified during hardening.
+- Latest row-count inspection found one organization, one membership, one commitment, and two audit events. Other Commitment Radar application tables were empty; preserve these existing records.
+- Current live migration history contains four Commitment Radar migrations, including audit-trigger hardening and the organization-cascade guard.
+- Organization-cascade guard migration: `commitment-radar/supabase/migrations/20261018100502_commitment_radar_audit_cascade_guard.sql`.
 - The applied migration is recorded in Supabase as `20261015120014_commitment_radar_backend_hardening`.
 - Its source is stored under `commitment-radar/supabase/migrations/20261015120014_commitment_radar_backend_hardening.sql`.
 
@@ -47,4 +50,4 @@ The diagram describes the intended and inspected database flow; it is not a runt
 
 ## Verification
 
-The companion `supabase/tests/security_contract.sql` checks table existence, RLS enablement, helper placement, RPC grants, wrapper security mode, and all fourteen supporting indexes. Supabase security advisor returned no findings after the migration. Performance advisor returned no unindexed foreign keys; it still reports unused-index INFO findings because the Commitment Radar tables have not yet received workload.
+The companion `supabase/tests/security_contract.sql` checks table existence, RLS enablement, helper placement, RPC grants, wrapper security mode, and all fourteen supporting indexes. The current Security Advisor still reports leaked-password protection disabled; the available connector does not expose the Auth setting needed to enable it. Performance advisor returned no unindexed foreign keys; it still reports unused-index INFO findings because the Commitment Radar tables have not yet received workload.

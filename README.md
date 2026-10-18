@@ -24,9 +24,11 @@ Sign in or create an account. If email confirmation is enabled, confirm the addr
 
 The page imports Supabase JS v2 from `https://esm.sh/@supabase/supabase-js@2`; internet access to that CDN is required. A user-provided public configuration override is stored in this browser's local storage. Supabase session persistence is handled by the Supabase client.
 
-## Important environment warning
+## Supabase project scope and isolation
 
-The connected Supabase project currently has migration history that includes both Commitment Radar migrations and migrations for another application (Hashttick). Do **not** reset, clean up, replay migrations, or make schema/data changes on that shared project as part of this work. Before hosted verification or production release, establish whether the shared project is intentional and use a dedicated disposable Commitment Radar test project for tenant-isolation testing.
+The owner has explicitly approved retaining Supabase project `htfrixfcirgrhlmwtkjs` for Commitment Radar. The latest live inspection found eight `public.cr_*` tables, RLS enabled on all eight, and four recorded Commitment Radar migrations, including audit-trigger hardening and the organization-cascade guard. A targeted scan found no Hashttick-named public routines, policies, or storage buckets. This is evidence about the inspected database objects, not proof that the Supabase organization has been renamed or transferred.
+
+The project is currently inside the Supabase organization named **Hashttick**. That organization contains exactly one project resource; its database schema is Commitment Radar's, but the project display name is still generic. There is no separate project resource named Hashttick to delete. The connected tools do not expose project rename, organization creation, or project-transfer controls. To finish the account-level separation, rename the project to **Commitment Radar** in Project Settings → General, create a new Supabase organization dedicated to Commitment Radar in the Dashboard, then transfer the project using the [official transfer workflow](https://supabase.com/docs/guides/platform/project-transfer). Do not reset the database or delete provider-side resources to simulate separation. Use an isolated disposable project for destructive integration tests.
 
 ## Verification
 
@@ -47,6 +49,9 @@ The CI browser smoke test runs in Chromium with mocked Supabase Auth and Turnsti
 - Confirm that zero-row updates/deletes and authorization errors are shown honestly; never show success until the server confirms the mutation.
 
 ## Engineering documentation
+- [Product plan](docs/product-plan-2026-10-18.md)
+- [Product KPIs and data quality](docs/product-kpis.md)
+- [Plan & Ship delivery handoff](docs/plan-and-ship-2026-10-18.md)
 
 - [Architecture](docs/architecture.md)
 - [Stage 3 delivery plan](docs/stage-3-delivery-plan.md)
@@ -56,7 +61,7 @@ The CI browser smoke test runs in Chromium with mocked Supabase Auth and Turnsti
 
 ## Design direction
 
-The current UI uses a cool-gray canvas, white surfaces, navy typography, blue primary actions, explicit semantic status labels, visible keyboard focus, responsive layouts, and reduced-motion support. The companion Figma concept is [Commitment Radar — Phase 4 UI Refinement](https://www.figma.com/design/cQoWTowRsC5NkTpabUb4L0). Canva's existing handoff has an unsaved draft correction to its stale status and next-step wording. Canva's thumbnail preview endpoint returned a 503, so it has not been saved or treated as synchronized.
+The current UI uses a cool-gray canvas, white surfaces, navy typography, blue primary actions, explicit semantic status labels, visible keyboard focus, responsive layouts, and reduced-motion support. The implementation-matched screen is in [Commitment Radar — Phase 4 UI Refinement](https://www.figma.com/design/cQoWTowRsC5NkTpabUb4L0) on the **Current Implementation** page. The original multi-screen concept and synchronized token library remain in [Product UI & Design System](https://www.figma.com/design/CueLiOMpV0m7OY7BEYEFcs). Core color, spacing, and radius tokens align across both files. The original library has the full 27-token semantic set; the Phase 4 file currently has 19 core variables because the Figma connector reached its Starter-plan call limit before the remaining eight semantic tokens could be mirrored. Canva's existing handoff has an unsaved draft correction to its stale status and next-step wording. Canva's thumbnail preview endpoint returned a 503, so it has not been saved or treated as synchronized.
 
 
 ## Email authentication and CAPTCHA setup

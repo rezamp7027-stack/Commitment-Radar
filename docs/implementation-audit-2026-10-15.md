@@ -1,5 +1,9 @@
 # Commitment Radar — Implementation Audit
 
+
+> **Current-state addendum — 2026-10-18:** This document preserves a historical phase snapshot. The current repository has a runnable frontend at the root (`index.html`, `app.js`, `styles.css`). Live Supabase inspection now shows eight `public.cr_*` tables with RLS enabled and four Commitment Radar migrations, including audit-trigger hardening and the organization-cascade guard. The latest row-count check found one organization, one membership, one commitment, and two audit events; preserve them. A targeted scan found no Hashttick-named public routines, policies, or storage buckets. The project itself remains in the Supabase organization named **Hashttick**; the connected tools do not expose organization rename/transfer controls. See the current [delivery handoff](./plan-and-ship-2026-10-18.md) where the relative path is available, and the root README for release gates.
+
+
 **Audit date:** 2026-10-15  
 **Target:** `rezamp7027-stack/Commitment-Radar`, default branch `main`; connected Supabase project `htfrixfcirgrhlmwtkjs`.  
 **Revision directly reviewed before this report was written:** `454c84529a1865a83a7330cc56c9b1d33495496f`.

@@ -1,5 +1,9 @@
 # Commitment Radar — Phase 3 Design Report
 
+
+> **Current-state addendum — 2026-10-18:** This document preserves a historical phase snapshot. The current repository has a runnable frontend at the root (`index.html`, `app.js`, `styles.css`). Live Supabase inspection now shows eight `public.cr_*` tables with RLS enabled and four Commitment Radar migrations, including audit-trigger hardening and the organization-cascade guard. The latest row-count check found one organization, one membership, one commitment, and two audit events; preserve them. A targeted scan found no Hashttick-named public routines, policies, or storage buckets. The project itself remains in the Supabase organization named **Hashttick**; the connected tools do not expose organization rename/transfer controls. See [the current delivery handoff](../../docs/plan-and-ship-2026-10-18.md) and the root README for release gates.
+
+
 **Date:** 2026-10-15  
 **Status:** Product design contract and Phase 4 engineering handoff finalized; visual synchronization into the existing Figma canvas remains open because the Figma connector reached its tool-call limit in this session  
 **Branch:** `main`  

@@ -4,12 +4,24 @@ import { readFileSync } from 'node:fs';
 
 const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
 const styles = readFileSync(new URL('../styles.css', import.meta.url), 'utf8');
+const auditMigration = readFileSync(new URL('../commitment-radar/supabase/migrations/20261018094039_commitment_radar_audit_trigger_hardening.sql', import.meta.url), 'utf8');
 const moduleSource = readFileSync(new URL('../app.js', import.meta.url), 'utf8').replace(
   /import\s+\{\s*createClient\s*\}\s+from\s+['"][^'"]+['"];\s*/,
   ''
 );
 assert.match(html, /<link rel="stylesheet" href="\.\/styles\.css">/);
 assert.match(html, /<script type="module" src="\.\/app\.js"><\/script>/);
+
+test('CSS exposes the shared Commitment Radar design tokens', () => {
+  for (const token of [
+    '--cr-color-brand-primary', '--cr-color-navigation-navy', '--cr-color-canvas',
+    '--cr-color-surface', '--cr-color-text-primary', '--cr-color-text-muted',
+    '--cr-color-border-default', '--cr-color-status-success',
+    '--cr-color-status-warning', '--cr-color-status-danger',
+    '--cr-color-status-success-bg', '--cr-color-status-warning-bg', '--cr-color-status-danger-bg', '--cr-color-status-info', '--cr-color-status-info-bg', '--cr-color-status-review', '--cr-space-half', '--cr-space-1', '--cr-space-6', '--cr-radius-small', '--cr-radius-large', '--cr-radius-full'
+  ]) assert.match(styles, new RegExp(token + ':'));
+  assert.match(styles, /--blue:var\(--cr-color-brand-primary\)/);
+});
 
 test('browser module parses as an async function body', () => {
   assert.doesNotThrow(() => new Function(`return async function(){\n${moduleSource}\n}`));
@@ -34,6 +46,12 @@ test('status and priority values match the inspected database constraints', () =
   assert.match(moduleSource, /const status=done\?'done':'open'/);
   assert.match(html, /value="urgent">Urgent/);
   assert.doesNotMatch(html, /value="critical">Critical/);
+});
+
+test('audit trigger hardening migration fixes search_path and blocks direct execution', () => {
+  assert.match(auditMigration, /SECURITY DEFINER[\s\S]*SET search_path = pg_catalog/i);
+  assert.match(auditMigration, /REVOKE ALL ON FUNCTION public\.cr_log_commitment_change\(\) FROM PUBLIC, anon, authenticated/i);
+  assert.match(auditMigration, /INSERT INTO public\.cr_audit_events/i);
 });
 
 test('no privileged Supabase key pattern is embedded in the frontend', () => {
