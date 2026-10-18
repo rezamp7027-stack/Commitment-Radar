@@ -2,7 +2,8 @@
 
 ## Verified current state
 
-- Supabase project: `htfrixfcirgrhlmwtkjs` (linked as Hashttick).
+- Supabase project: `htfrixfcirgrhlmwtkjs`, explicitly retained for Commitment Radar by the owner.
+- The project is still in the Supabase organization named **Hashttick**; the connected tools do not expose organization rename/transfer controls.
 - Eight application tables use the isolated `cr_*` prefix and have RLS enabled.
 - Authorization is tenant-scoped through organization membership and roles.
 - The application data tables are currently empty; no customer data was modified during hardening.
