@@ -2,7 +2,9 @@
 
 ## Scope and evidence
 - Current implementation target: `main`, root `index.html`.
-- Backend observed through the Supabase connection: project `htfrixfcirgrhlmwtkjs`.
+- Backend target: existing Supabase project `htfrixfcirgrhlmwtkjs`, explicitly retained for Commitment Radar by the owner.
+- Latest live inspection: eight `public.cr_*` tables with RLS enabled; three Commitment Radar migrations; one organization, one membership, one commitment, and two audit events were present at the last row-count check.
+- The project remains in the Supabase organization named **Hashttick**; organization rename/transfer is not exposed by the connected tools.
 - This is a manual/automated test plan. Tests below are not marked passed unless an actual run produced evidence.
 
 ## Implemented in the browser client
