@@ -109,6 +109,10 @@ BEGIN
     RAISE EXCEPTION 'Audit trigger must be SECURITY DEFINER with a fixed pg_catalog search_path';
   END IF;
 
+  IF position('public.cr_organizations AS o' IN pg_get_functiondef('public.cr_log_commitment_change()'::regprocedure)) = 0 THEN
+    RAISE EXCEPTION 'Audit trigger must skip audit inserts when the parent organization is being cascade-deleted';
+  END IF;
+
   IF has_function_privilege('anon', 'public.cr_log_commitment_change()', 'EXECUTE')
      OR has_function_privilege('authenticated', 'public.cr_log_commitment_change()', 'EXECUTE')
      OR EXISTS (
