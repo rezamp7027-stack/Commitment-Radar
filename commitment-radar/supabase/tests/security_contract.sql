@@ -113,6 +113,47 @@ BEGIN
     RAISE EXCEPTION 'Audit trigger must skip audit inserts when the parent organization is being cascade-deleted';
   END IF;
 
+  IF (
+    SELECT count(*)
+    FROM pg_trigger t
+    JOIN pg_class c ON c.oid = t.tgrelid
+    JOIN pg_namespace n ON n.oid = c.relnamespace
+    WHERE n.nspname = 'public'
+      AND c.relname IN (
+        'cr_organizations', 'cr_projects', 'cr_commitments',
+        'cr_evidence', 'cr_dependencies', 'cr_reviews'
+      )
+      AND t.tgname = 'cr_guard_immutable_fields'
+      AND NOT t.tgisinternal
+  ) <> 6 THEN
+    RAISE EXCEPTION 'Immutable-field guard trigger is not attached to all six mutable entity tables';
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_proc p
+    JOIN pg_namespace n ON n.oid = p.pronamespace
+    WHERE n.nspname = 'private'
+      AND p.proname = 'cr_guard_immutable_fields'
+      AND NOT p.prosecdef
+      AND p.proconfig @> ARRAY['search_path=pg_catalog']
+  ) THEN
+    RAISE EXCEPTION 'Immutable-field guard must be SECURITY INVOKER with a fixed search_path';
+  END IF;
+
+  IF has_function_privilege('anon', 'private.cr_guard_immutable_fields()', 'EXECUTE')
+     OR has_function_privilege('authenticated', 'private.cr_guard_immutable_fields()', 'EXECUTE')
+     OR EXISTS (
+       SELECT 1
+       FROM pg_proc p
+       CROSS JOIN LATERAL aclexplode(COALESCE(p.proacl, acldefault('f', p.proowner))) AS acl
+       WHERE p.oid = 'private.cr_guard_immutable_fields()'::regprocedure
+         AND acl.grantee = 0
+         AND acl.privilege_type = 'EXECUTE'
+     ) THEN
+    RAISE EXCEPTION 'Immutable-field trigger function must not be directly executable by API roles or PUBLIC';
+  END IF;
+
   IF has_function_privilege('anon', 'public.cr_log_commitment_change()', 'EXECUTE')
      OR has_function_privilege('authenticated', 'public.cr_log_commitment_change()', 'EXECUTE')
      OR EXISTS (

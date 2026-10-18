@@ -76,6 +76,9 @@ jobs:
       - name: Apply audit cascade guard
         run: psql -v ON_ERROR_STOP=1 -f commitment-radar/supabase/migrations/20261018100502_commitment_radar_audit_cascade_guard.sql
 
+      - name: Apply immutable tenant fields hardening
+        run: psql -v ON_ERROR_STOP=1 -f commitment-radar/supabase/migrations/20261018153000_commitment_radar_immutable_tenant_fields.sql
+
       - name: Verify schema and grants
         run: psql -v ON_ERROR_STOP=1 -f commitment-radar/supabase/tests/security_contract.sql
 
