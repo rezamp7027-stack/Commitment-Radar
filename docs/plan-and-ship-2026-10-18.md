@@ -15,7 +15,7 @@
 - Live migration history contains four Commitment Radar migrations, including audit-trigger hardening and the organization-cascade guard.
 - Both audit-trigger hardening and the organization-cascade guard are applied live and tracked under their observed migration versions in the repository.
 - The connected Supabase organization is still named **Hashttick**. The available connector does not expose organization rename or project-transfer operations.
-- The Phase 4 Figma file `cQoWTowRsC5NkTpabUb4L0` now has a `Commitment Radar` token collection and an editable `Current Implementation` screen; matching dashboard paints were bound to its tokens.
+- The Phase 4 Figma file `cQoWTowRsC5NkTpabUb4L0` now has a `Commitment Radar` token collection and an editable `Current Implementation` screen; matching dashboard paints were bound to its tokens. Its collection currently has 19 core variables; mirroring the remaining eight semantic tokens was blocked by the Figma connector's Starter-plan call limit.
 - The original multi-screen Figma file `CueLiOMpV0m7OY7BEYEFcs` already had a 27-variable `Commitment Radar Tokens` collection. Its colors, scopes, CSS code syntax, and design-system hex labels were synchronized; 635 Product UI paints and 109 Design System paints were bound to shared variables.
 - Canva handoff documents contain stale statements about no frontend and mixed migration history. Draft corrections are being prepared and require approval before saving.
 - Auth security still has a Supabase Advisor warning for leaked-password protection being disabled. The available connected tools do not expose this Auth setting.
