@@ -8,6 +8,7 @@ Read-only diagnostics and statistical research for an authorized Crash-game WebS
 - Best-effort redaction of common credential fields before local messages are written.
 - Local JSONL inspection that reports observed event-like values, JSON paths, and multiplier-like candidates without assuming a site schema.
 - Explicit configurable JSON event parsing; no target-site event schema is assumed.
+- Opt-in experimental adapter for a publicly documented legacy SignalR `OnCrash` frame shape; this is a candidate schema, not a verified current endpoint.
 - Candidate rows remain unverified until reconciled against trusted visible history.
 - Strict CSV validation, duplicate-round rejection, timestamp normalization, and chronology diagnostics.
 - Descriptive statistics, Wilson confidence intervals, recent-window stability checks, and a chronological walk-forward frequency baseline.
@@ -46,6 +47,7 @@ Optional inspection arguments:
 The report lists JSON field paths and types, event-like values, and candidate values for fields whose names resemble multiplier/coefficient fields. This is exploratory only: a numeric field may be an unrelated ID, timer, balance, or intermediate value. Confirm a completed-round event, then compare several captured values with the visible completed-round history before configuring parser paths. Do not mark rows verified because values merely look plausible.
 
 Configuration:
+- CRASH_PROTOCOL: `generic` by default; `signalr_oncrash_candidate` enables the experimental legacy SignalR parser. Use only after obtaining an authorized feed; current compatibility is unverified.
 - MAX_MESSAGES: maximum messages (default 100; hard cap 10,000)
 - WS_TIMEOUT_SECONDS: receive timeout (default 15; hard cap 300 seconds)
 - CRASH_EVENT_TYPE_PATH, CRASH_FINAL_EVENT_TYPES, CRASH_ROUND_ID_PATH, CRASH_MULTIPLIER_PATH: optional schema mapping, only after the event format is confirmed
@@ -112,7 +114,7 @@ The Supabase project named Crash already contains `public.crash_rounds` and `pub
 
 ## Current verification limits
 
-The live endpoint and its authoritative completed-round event have not been verified in this repository. Synthetic fixtures test generic parser behavior only; they do not establish the real feed schema or any predictive advantage. A successful WebSocket handshake does not prove completed-round multipliers are present.
+The live endpoint and its authoritative completed-round event have not been verified in this repository. Synthetic fixtures test generic parsing and the experimental legacy `OnCrash` adapter only; they do not establish the real feed schema or any predictive advantage. A successful WebSocket handshake does not prove completed-round multipliers are present.
 
 ## Android / Termux setup
 
