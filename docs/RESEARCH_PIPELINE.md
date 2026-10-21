@@ -29,7 +29,7 @@ Input CSV must be ordered oldest-to-newest. Defaults are transparent and configu
 ## Where each kind of data belongs
 
 - **GitHub:** source code, schema documentation, migrations, tests, release notes, model methodology, and small synthetic fixtures. Do not create one Git commit per live round; that is inefficient, noisy, and can accidentally publish private or sensitive data.
-- **Supabase/Postgres:** proposed durable store for normalized round records and a prediction ledger, once the owner explicitly confirms the intended project. Keep it server-side and use least privilege. Never expose a service-role key in a browser app.
+- **Supabase/Postgres:** the Crash project has durable normalized round and prediction tables. The `sync-csv` command inserts unverified candidates through PostgREST using a service-role key held only in local/server environment. RLS is enabled and browser roles have no table grants. Never expose the service-role key in a browser app.
 - **Local Termux:** temporary sanitized capture files and local analysis outputs. They are not a durable backup unless separately backed up.
 - **Raw WebSocket frames:** do not upload by default. They can contain tokens, session IDs, account metadata, or proprietary information. Keep only necessary sanitized fields and an event hash when legally and technically appropriate.
 - **Model memory/state:** store versioned, inspectable features and training-window metadata in the database, not undocumented internal model memory. Each estimate should record data count, model version, time, threshold, probability, uncertainty interval, and later outcome if available.

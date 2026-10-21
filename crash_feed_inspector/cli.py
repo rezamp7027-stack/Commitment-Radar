@@ -13,6 +13,7 @@ from .dataset import load_rounds_csv, quality_report, verified_multipliers
 from .inspect import inspect_jsonl
 from .report import generate_dashboard
 from .research import research_report
+from .supabase_store import preview_sync, sync_unverified_rounds
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -50,6 +51,13 @@ def main(argv: Sequence[str] | None = None) -> int:
     dashboard.add_argument("--output", type=Path, default=Path("data/dashboard.html"))
     dashboard.add_argument("--threshold", type=float, default=2.0)
 
+    sync = subparsers.add_parser(
+        "sync-csv", help="Send unverified CSV candidates to the private Supabase store"
+    )
+    sync.add_argument("csv_path", type=Path)
+    sync.add_argument("--batch-size", type=int, default=200)
+    sync.add_argument("--dry-run", action="store_true", help="Validate and preview without network access")
+
     args = parser.parse_args(argv)
     if args.command in (None, "capture"):
         capture()
@@ -70,6 +78,19 @@ def main(argv: Sequence[str] | None = None) -> int:
     except (OSError, ValueError) as exc:
         parser.error(str(exc))
     report = {"quality": quality_report(rows)}
+
+    if args.command == "sync-csv":
+        if not 1 <= args.batch_size <= 500:
+            parser.error("--batch-size must be between 1 and 500.")
+        if args.dry_run:
+            result = preview_sync(rows)
+        else:
+            try:
+                result = sync_unverified_rounds(rows, batch_size=args.batch_size)
+            except (ValueError, RuntimeError) as exc:
+                parser.error(str(exc))
+        print(json.dumps({"sync": result}, ensure_ascii=False, indent=2))
+        return 0
 
     if args.command == "research-csv":
         data = verified_multipliers(rows)

@@ -12,7 +12,7 @@ Read-only diagnostics and statistical research for an authorized Crash-game WebS
 - Strict CSV validation, duplicate-round rejection, timestamp normalization, and chronology diagnostics.
 - Descriptive statistics, Wilson confidence intervals, recent-window stability checks, and a chronological walk-forward frequency baseline.
 - Unit tests through GitHub Actions.
-- Review-only Supabase/Postgres migration draft for a round-history and prediction ledger; it has not been deployed.
+- Supabase/Postgres round-history and prediction ledger is deployed in the Crash project; local CSV candidates can be uploaded with the private server-side sync command.
 
 ## Explicit non-goals
 
@@ -68,7 +68,7 @@ CSV must contain round_id and multiplier. Optional columns are timestamp_utc, so
     python -m crash_feed_inspector analyze-csv path/to/rounds.csv --threshold 2.0 --min-train 30
     python -m crash_feed_inspector research-csv path/to/rounds.csv
     python -m crash_feed_inspector research-csv path/to/rounds.csv --thresholds 1.5 2 3 5 --windows 30 100 300 --min-history 100 --max-window-rate-gap 0.15
-    python -m crash_feed_inspector dashboard-csv path/to/rounds.csv --output data/dashboard.html --threshold 2.0
+    python -m crash_feed_inspector dashboard-csv path/to/rounds.csv --output data/dashboard.html --threshold 2.0\n    python -m crash_feed_inspector sync-csv path/to/rounds.csv --dry-run
 
 Research uses only rows explicitly marked verified=true. It reports historical threshold frequencies, Wilson 95% intervals, and stability comparisons across recent windows. Insufficient or unstable history yields a no-signal status. A stable historical rate is not a forecast of the next round and does not establish a profitable edge. Input must be ordered oldest-to-newest. Trying many thresholds/windows and reporting only the best creates multiple-testing bias; predefine comparisons and preserve a final untouched holdout.
 
@@ -88,11 +88,11 @@ Historical hit rates are descriptive, not guarantees or proof of a next-round ed
     python -m unittest discover -s tests -v
     python -m compileall -q crash_feed_inspector tests
 
-## Data retention and Supabase draft
+## Data retention and Supabase
 
 See docs/RESEARCH_PIPELINE.md for the multi-filter workflow, provenance, validation, model-evaluation rules, and data-retention design. GitHub should store source code, tests, schema documentation, migrations, and methodology—not a new commit for every live round. A database is better suited to durable per-round records and a prediction ledger.
 
-supabase/migrations/202610210001_crash_research_ledger.sql is a review-only draft. It enables row-level security and intentionally creates no public client policies. It has NOT been applied. Confirm the correct Supabase project, server-side ingestion path, and access policy before deployment. Never expose a service-role key in a browser app.
+The Supabase project named Crash already contains `public.crash_rounds` and `public.crash_predictions`; both tables have RLS enabled and intentionally no `anon`/`authenticated` table grants or policies. The repository includes a private `sync-csv` command for importing **unverified candidates only**. Configure `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` in a local `.env` file, then run `python -m crash_feed_inspector sync-csv path/to/rounds.csv --dry-run` followed by the same command without `--dry-run`. The service-role key is privileged: never put it in a browser, GitHub Actions logs, a public repository, or a static dashboard. Duplicate `(source, round_id)` records are ignored, existing rows are not overwritten, and imported records are never marked verified. See `supabase/README.md` before using Supabase migrations; the live project contains legacy migration history from the prior application.
 
 ## Project documents
 
