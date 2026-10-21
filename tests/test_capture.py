@@ -45,6 +45,28 @@ class CaptureTests(unittest.TestCase):
             capture_module.capture()
         return base, fake_socket
 
+
+    def test_websocket_connection_error_never_prints_url_credentials(self):
+        secret_url = "wss://example.invalid/feed?access_token=private-session-token"
+        with (
+            patch.dict(os.environ, {
+                "CRASH_WS_URL": secret_url,
+                "MAX_MESSAGES": "1",
+                "WS_TIMEOUT_SECONDS": "1",
+            }, clear=True),
+            patch.object(capture_module, "load_dotenv"),
+            patch.object(
+                capture_module.websocket,
+                "create_connection",
+                side_effect=RuntimeError(f"failed to connect to {secret_url}"),
+            ),
+        ):
+            with self.assertRaises(SystemExit) as error:
+                capture_module.capture()
+        self.assertNotIn("private-session-token", str(error.exception))
+        self.assertNotIn("access_token", str(error.exception))
+        self.assertIn("Endpoint details were omitted", str(error.exception))
+
     def test_capture_without_mapping_does_not_infer_numbers_and_redacts_secrets(self):
         raw = json.dumps({"type": "round.completed", "id": "r1", "multiplier": 2.5, "token": "private-value"})
         base, fake_socket = self.run_capture([raw], {})
