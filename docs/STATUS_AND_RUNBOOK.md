@@ -21,7 +21,7 @@ The project uses the same general ingestion pattern seen in public examples: an 
 
 Important distinctions:
 - The public WebSocket base address alone does not establish a working authenticated connection.
-- Session-specific URLs/tokens may expire and are sensitive. Configure them only in a private local `.env`; never commit them or paste them into chat.
+- Session-specific URLs/tokens may be required, may expire, and are sensitive. Configure them only in the ignored local `.env`; never commit them, paste them into chat, or expose them in logs. Connection errors suppress endpoint details to reduce accidental leakage.
 - Event names, round IDs, multiplier fields, and timestamps must be confirmed from a private sanitized sample. Do not guess parser paths or label arbitrary numeric messages as results.
 - The current capture command is bounded and read-only. It does not place bets or interact with the game.
 - A parsed result is still an unverified candidate until checked against trusted visible completed-round history.
