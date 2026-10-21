@@ -36,6 +36,13 @@ Important distinctions:
 
 Conclusion: none of these checks yielded verified live multipliers. Do not populate the database with guessed values. Next acceptance step is a bounded read-only capture from a session the user controls, with session tokens/cookies removed before any sample is shared; then confirm the final-round event schema against visible completed-round history.
 
+## Experimental SignalR adapter added (2026-10-21)
+
+- Reviewed the public `Zakaria-laktati/crash-1xbet-monitoring` example. Its scraper parses SignalR invocation frames where `type=1`, `target=OnCrash`, and `arguments[0]` contains `l`, `f`, and `ts`.
+- Added `crash_feed_inspector/signalr.py` as an opt-in candidate parser and `tests/test_signalr.py` synthetic tests. The adapter converts `ts` from epoch milliseconds to UTC and always sets `verified=false`.
+- To try this adapter with an authorized feed, set `CRASH_PROTOCOL=signalr_oncrash_candidate` in local `.env`. Keep generic parser path settings blank. This does not establish endpoint reachability, authorization, or compatibility with the current game; do not share URLs containing tokens/cookies.
+- Do not import candidates as verified until the values have been reconciled with visible completed-round history. This adapter is research/collection only and does not predict outcomes or place bets.
+
 ## Local setup
 
 1. Install Python 3.11 or newer.
