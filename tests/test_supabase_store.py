@@ -70,6 +70,32 @@ class SupabaseStoreTests(unittest.TestCase):
         self.assertEqual(timeout, 20)
         self.assertNotIn("private-secret", repr(report))
 
+
+    def test_http_error_body_cannot_echo_service_role_key(self):
+        from io import BytesIO
+        from urllib.error import HTTPError
+
+        secret = "service-role-super-secret"
+
+        def opener(request, timeout):
+            raise HTTPError(
+                request.full_url,
+                400,
+                "Bad Request",
+                hdrs=None,
+                fp=BytesIO(f"database rejected key {secret}".encode("utf-8")),
+            )
+
+        with self.assertRaises(RuntimeError) as error:
+            sync_unverified_rounds(
+                [self.row("a")],
+                supabase_url="https://project.supabase.co",
+                service_role_key=secret,
+                opener=opener,
+            )
+        self.assertNotIn(secret, str(error.exception))
+        self.assertIn("[REDACTED]", str(error.exception))
+
     def test_batches_and_counts_ignored_duplicates(self):
         calls = []
 
