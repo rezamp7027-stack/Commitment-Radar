@@ -71,7 +71,12 @@ def capture() -> None:
     try:
         ws = websocket.create_connection(url, timeout=timeout, enable_multithread=True)
     except Exception as exc:
-        raise SystemExit(f"WebSocket connection failed: {type(exc).__name__}: {exc}") from exc
+        # Connector exceptions may include the complete request URL, including session tokens.
+        raise SystemExit(
+            f"WebSocket connection failed ({type(exc).__name__}). "
+            "Endpoint details were omitted to avoid leaking URL credentials; "
+            "check local network access, endpoint format, and session expiry."
+        ) from None
 
     print("Connected. Capturing bounded sample; no bets or game actions are performed.")
     if protocol_mode == "signalr_oncrash_candidate":
