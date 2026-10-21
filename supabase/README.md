@@ -17,6 +17,6 @@ Run `python -m crash_feed_inspector sync-csv data/rounds.csv --dry-run` first. T
 
 ## Migration safety warning
 
-The original repository contained two un-applied draft files with migration filenames that do not match the live project's recorded migration version. They have been moved to `supabase/archive/` for traceability, not executable deployment. The live database records the Crash schema at version `20261021105220`; the repository contains that schema baseline and a later additive integrity migration.
+The original repository contained two un-applied draft files with migration filenames that do not match the live project's recorded migration version. They have been moved to `supabase/archive/` for traceability, not executable deployment. The live database records the Crash schema at version `20261021105220`; the repository contains that schema baseline and two later additive integrity migrations. The guardrails validate source-event SHA-256 format, all-or-none evaluation fields, confidence interval ordering, finite thresholds, and non-empty model versions.
 
 The live migration history also includes older Commitment-Radar migration versions. Before using `supabase db push` or attempting to recreate the project from scratch, reconcile those legacy versions against the intended local history and test on a disposable project. Do not force-reset or drop production data to make the histories match.
