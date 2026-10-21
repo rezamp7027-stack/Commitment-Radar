@@ -97,7 +97,7 @@ def capture() -> None:
             candidate_results = []
             if protocol_mode == "signalr_oncrash_candidate":
                 # SignalR may concatenate JSON frames using ASCII record separator.
-                for frame in sanitized.split("\\x1e"):
+                for frame in sanitized.split("\x1e"):
                     if not frame.strip():
                         continue
                     try:
