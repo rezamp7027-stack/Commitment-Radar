@@ -25,9 +25,9 @@ class SecurityTests(unittest.TestCase):
     def test_record_separated_signalr_json_frames_are_redacted_individually(self):
         first = json.dumps({"type": 1, "target": "OnCrash", "arguments": [{"l": "r1", "f": "2.0"}]})
         private = json.dumps({"type": 1, "target": "Auth", "access_token": "private-frame-token"})
-        result = sanitize_message(first + "\\x1e" + private + "\\x1e")
+        result = sanitize_message(first + "\x1e" + private + "\x1e")
         self.assertNotIn("private-frame-token", result)
-        frames = [part for part in result.split("\\x1e") if part]
+        frames = [part for part in result.split("\x1e") if part]
         self.assertEqual(len(frames), 2)
         self.assertEqual(json.loads(frames[1])["access_token"], "[REDACTED]")
 
