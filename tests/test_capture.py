@@ -74,6 +74,28 @@ class CaptureTests(unittest.TestCase):
         self.assertEqual(rows[0]["multiplier"], 2.75)
         self.assertFalse(rows[0]["verified"])
 
+    def test_signalr_adapter_splits_combined_frames_and_writes_candidates(self):
+        first = json.dumps({"type": 1, "target": "OnCrash", "arguments": [{"l": "r-1", "f": "1.25", "ts": 1760000000000}]})
+        second = json.dumps({"type": 1, "target": "OnCrash", "arguments": [{"l": "r-2", "f": "4.5", "ts": 1760000001000}]})
+        base, fake_socket = self.run_capture(
+            [first + "\x1e" + second + "\x1e"],
+            {"CRASH_PROTOCOL": "signalr_oncrash_candidate"},
+        )
+        rows = load_rounds_csv(base / "rounds.csv")
+        self.assertTrue(fake_socket.closed)
+        self.assertEqual([row["round_id"] for row in rows], ["r-1", "r-2"])
+        self.assertEqual([row["multiplier"] for row in rows], [1.25, 4.5])
+        self.assertTrue(all(row["verified"] is False for row in rows))
+        self.assertTrue(all(row["timestamp_utc"] is not None for row in rows))
+
+    def test_signalr_adapter_excludes_conflicting_round_ids(self):
+        a = json.dumps({"type": 1, "target": "OnCrash", "arguments": [{"l": "same", "f": "2.0", "ts": 1760000000000}]})
+        b = json.dumps({"type": 1, "target": "OnCrash", "arguments": [{"l": "same", "f": "3.0", "ts": 1760000001000}]})
+        base, fake_socket = self.run_capture([a, b], {"CRASH_PROTOCOL": "signalr_oncrash_candidate"})
+        rows = load_rounds_csv(base / "rounds.csv")
+        self.assertTrue(fake_socket.closed)
+        self.assertEqual(rows, [])
+
 
 if __name__ == "__main__":
     unittest.main()
