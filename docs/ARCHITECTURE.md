@@ -38,7 +38,7 @@ Descriptive analysis + chronological walk-forward baseline
 - analytics.py: descriptive statistics, rolling empirical rates, and walk-forward baseline.
 - cli.py: command routing and JSON output.
 - report.py: self-contained local HTML report from explicitly verified CSV rows only.
-- Supabase migration: proposed server-only persistence schema; not deployed.
+- supabase_store.py: server-side PostgREST insert of unverified candidates only; service-role credentials stay local/server-side.
 
 ## Design decisions
 
@@ -46,7 +46,7 @@ Descriptive analysis + chronological walk-forward baseline
 2. Parsing is not verification. Parsed values remain candidates until reconciled against a trusted reference.
 3. Fail closed on malformed data. Invalid numeric values, duplicate round IDs, unsupported CSV columns, and ambiguous timezone values are rejected rather than silently corrected.
 4. Keep credentials out of logs. Common sensitive fields are redacted before writing. Redaction is best-effort, so sensitive sources must not be captured if safe retention cannot be established.
-5. No direct database writes yet. The existing active Supabase project has not been confirmed as belonging to this repository. The migration is review-only until the correct destination and ingestion trust boundary are established.
+5. Database access is server-side only. The Crash Supabase project has the round and prediction tables deployed; RLS is enabled and no browser roles have table grants. The sync command imports unverified candidates only, uses conflict-ignore semantics, and never sets verified=true. The service-role key must remain in a trusted local/server environment.
 6. Research must be chronological. Model features and probabilities for a round may use only earlier outcomes. Historical fit alone is not evidence of a reliable edge.
 7. No betting actions. The project is read-only and analytical.
 
