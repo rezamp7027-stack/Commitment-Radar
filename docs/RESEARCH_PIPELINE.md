@@ -13,7 +13,7 @@ Maintain a provenance-aware history of observed rounds and time-stamped research
 5. **Independent verification:** compare captured outcomes with a trusted visible completed-round history. Until reconciled, a candidate stays unverified and must not enter model training.
 6. **Dataset quality:** report missing timestamps, source/schema versions, duplicates, chronology violations, missing data, and conflicting records.
 7. **Baseline estimates:** compute empirical threshold frequencies and confidence intervals from verified outcomes only.
-8. **Stability filter:** compare recent windows with the full historical frequency; large shifts result in no_signal_unstable_history.
+8. **Stability filter:** compare recent windows with the full historical frequency; insufficient recent-window coverage or large shifts must result in no_signal.
 9. **Out-of-sample evaluation:** predictions must be timestamped before the result, use only earlier data, and be evaluated on chronological holdouts. Compare against simple frequency baselines using proper scoring rules and calibration.
 10. **Decision gate:** report no_signal when data are insufficient, unstable, unverified, or fail predeclared evaluation criteria. A passing filter means only that a historical estimate passed those diagnostics; it does not establish an exploitable edge.
 
@@ -32,7 +32,7 @@ Input CSV must be ordered oldest-to-newest. Defaults are transparent and configu
 - **Supabase/Postgres:** the Crash project has durable normalized round and prediction tables. The `sync-csv` command inserts unverified candidates through PostgREST using a service-role key held only in local/server environment. RLS is enabled and browser roles have no table grants. Never expose the service-role key in a browser app.
 - **Local Termux:** temporary sanitized capture files and local analysis outputs. They are not a durable backup unless separately backed up.
 - **Raw WebSocket frames:** do not upload by default. They can contain tokens, session IDs, account metadata, or proprietary information. Keep only necessary sanitized fields and an event hash when legally and technically appropriate.
-- **Model memory/state:** store versioned, inspectable features and training-window metadata in the database, not undocumented internal model memory. Each estimate should record data count, model version, time, threshold, probability, uncertainty interval, and later outcome if available.
+- **Model memory/state:** store versioned, inspectable features and training-window metadata in the database, not undocumented internal model memory. Each estimate should record model version, data count, timestamp, threshold, probability, uncertainty interval, and later outcome if available.
 
 ## Supabase-backed research and evaluation
 
@@ -41,9 +41,15 @@ Input CSV must be ordered oldest-to-newest. Defaults are transparent and configu
 - `evaluate-supabase --source SOURCE` scores research-only estimates against the first later verified round. Estimates created after an outcome are not retroactively matched to that outcome.
 - This is retrospective research and baseline scoring, not a wagering system or a claim of profitable prediction.
 
-## Supabase migration status
+## Live Supabase migration status
 
-supabase/migrations/202610210001_crash_research_ledger.sql is a review-only draft. It enables row-level security and intentionally defines no public client policies. Do not apply it until the correct Supabase project, authorization model, retention policy, and server-side ingestion path are confirmed. No database deployment is implied by committing this SQL file.
+The Crash Supabase project has the following applied migrations in its recorded migration history:
+
+- `20261021105220_crash_research_schema`
+- `20261021111154_crash_integrity_guardrails`
+- `20261021112101_crash_prediction_integrity`
+
+The project also retains older Commitment-Radar migrations and a recorded legacy cleanup migration. Do not assume that applying the repository migrations to a fresh project is safe without reconciling the full migration history. The current `crash_rounds` and `crash_predictions` tables have RLS enabled, no direct `anon`/`authenticated` table policies, and zero rows at the last check on 2026-10-21. The empty database means no real-feed analysis or model-performance conclusion is available.
 
 ## Forecast validity
 
