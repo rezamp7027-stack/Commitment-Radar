@@ -101,6 +101,18 @@ See docs/RESEARCH_PIPELINE.md for the multi-filter workflow, provenance, validat
 
 The Supabase project named Crash already contains `public.crash_rounds` and `public.crash_predictions`; both tables have RLS enabled and intentionally no `anon`/`authenticated` table grants or policies. The repository includes private `sync-csv` and `capture-sync` commands for importing **unverified candidates only**. For an end-to-end bounded capture, first run `python -m crash_feed_inspector capture-sync --dry-run` to validate candidates without a database write; then run `python -m crash_feed_inspector capture-sync` to capture and sync. The `capture-sync` command requires the privileged credentials to exist in a local `.env` file and gracefully skips Supabase when the capture contains no schema-matched candidate rows. Configure `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` in a local `.env` file, then run `python -m crash_feed_inspector sync-csv path/to/rounds.csv --dry-run` followed by the same command without `--dry-run`. The service-role key is privileged: never put it in a browser, GitHub Actions logs, a public repository, or a static dashboard. Duplicate `(source, round_id)` records are ignored, existing rows are not overwritten, and imported records are never marked verified. `research-supabase --source ...` reads timestamped verified history, writes the historical-frequency baseline and uncertainty interval to the prediction ledger, and never emits a candidate signal. `evaluate-supabase --source ...` evaluates research-only estimates against the first later verified round. These commands require enough verified, timestamped rows; current empty tables will correctly return no data. See `supabase/README.md` before using Supabase migrations; the live project contains legacy migration history from the prior application.
 
+## GitHub Actions environment (manual, bounded capture)
+
+A manually triggered workflow is available at [Actions → Authorized Crash Feed Capture](https://github.com/rezamp7027-stack/Commitment-Radar/actions/workflows/crash-feed-capture.yml). It defaults to **dry-run** and limits capture to 1–500 messages. It does not upload captured messages as artifacts, and removes local capture files at the end of the job.
+
+Configure these values in **Settings → Secrets and variables → Actions** before running it:
+- Repository secret `CRASH_WS_URL`: authorized WebSocket endpoint for the feed. Treat it as sensitive if it contains session information.
+- Repository secret `SUPABASE_URL`: Supabase project URL.
+- Repository secret `SUPABASE_SERVICE_ROLE_KEY`: service-role key; required only for a non-dry-run write. Never use this key in frontend code.
+- Optional repository variable `CRASH_PROTOCOL`: `signalr_oncrash_candidate` (default) or `generic`.
+
+The GitHub connector used to maintain this repository cannot write GitHub Actions secrets directly. The workflow reads them securely when you add them in repository settings; no secret values belong in this repository. Use only an endpoint you are authorized to access. The legacy SignalR schema remains unverified against the current live game, so a dry-run and comparison with visible completed-round history are required before a write.
+
 ## Project documents
 
 - [Verified status and operations runbook](docs/STATUS_AND_RUNBOOK.md)
