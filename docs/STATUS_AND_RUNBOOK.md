@@ -26,6 +26,16 @@ Important distinctions:
 - The current capture command is bounded and read-only. It does not place bets or interact with the game.
 - A parsed result is still an unverified candidate until checked against trusted visible completed-round history.
 
+## Investigation of the three candidate URLs (2026-10-21)
+
+- `https://1x-bet.mobi/en/games/crash`: the inspection tool followed a regional redirect to `1xbet.es/en/games/crash`, which it could not load. No live multiplier payload was obtained.
+- `https://1x-bet.mobi/en/live/crash`: the inspection tool followed a regional redirect to `1xbet.es/en/live/crash`, which it could not load. No live multiplier payload was obtained.
+- `https://1xbetcrash.top/`: the accessible page describes a free/demo game and promotional content. Its “Play Now” link goes to `/go/`; the inspected destination exposed no readable feed or round payload. Treat this as an unverified third-party/demo route, not as a trusted live source.
+- `wss://ma-1xbet.com/games-frame/sockets/crash`: a public example documents this as a WebSocket base, but that does not confirm current reachability or authorize a session. The project has no configured live URL or authenticated handshake result.
+- The execution environment used for this inspection could not resolve external hosts at the network layer, so it could not independently perform an HTTP/WebSocket handshake. This is an environment limitation, not evidence that the endpoint is down.
+
+Conclusion: none of these checks yielded verified live multipliers. Do not populate the database with guessed values. Next acceptance step is a bounded read-only capture from a session the user controls, with session tokens/cookies removed before any sample is shared; then confirm the final-round event schema against visible completed-round history.
+
 ## Local setup
 
 1. Install Python 3.11 or newer.
