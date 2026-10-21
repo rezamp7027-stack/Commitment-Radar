@@ -36,6 +36,14 @@ def sanitize_message(raw: str) -> str:
     format. Do not capture messages if the source may expose credentials that
     cannot safely be retained.
     """
+    # SignalR can combine multiple JSON frames with ASCII record separator (0x1e).
+    # Redact each frame independently so one valid sequence is not downgraded to
+    # the weaker free-text fallback just because the entire sequence is not JSON.
+    if "\\x1e" in raw:
+        return "\\x1e".join(
+            sanitize_message(frame) if frame.strip() else frame
+            for frame in raw.split("\\x1e")
+        )
     try:
         payload = json.loads(raw)
     except (json.JSONDecodeError, TypeError):
