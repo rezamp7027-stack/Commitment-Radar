@@ -11,6 +11,7 @@ import websocket
 from dotenv import load_dotenv
 
 from .protocol import parse_final_result
+from .signalr import parse_oncrash_candidate
 from .security import sanitize_message
 
 DATA_DIR = Path.cwd() / "data"
@@ -57,6 +58,11 @@ def capture() -> None:
     except ValueError as exc:
         raise SystemExit("MAX_MESSAGES and WS_TIMEOUT_SECONDS must be integers.") from exc
     parser_config = _parser_config()
+    protocol_mode = os.getenv("CRASH_PROTOCOL", "generic").strip().lower()
+    if protocol_mode not in {"generic", "signalr_oncrash_candidate"}:
+        raise SystemExit("CRASH_PROTOCOL must be generic or signalr_oncrash_candidate.")
+    if protocol_mode == "signalr_oncrash_candidate" and parser_config is not None:
+        raise SystemExit("Clear generic CRASH_*_PATH mappings when using signalr_oncrash_candidate mode.")
 
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     count, parse_errors = 0, 0
@@ -68,7 +74,9 @@ def capture() -> None:
         raise SystemExit(f"WebSocket connection failed: {type(exc).__name__}: {exc}") from exc
 
     print("Connected. Capturing bounded sample; no bets or game actions are performed.")
-    if parser_config is None:
+    if protocol_mode == "signalr_oncrash_candidate":
+        print("Experimental legacy SignalR OnCrash adapter enabled; candidates remain unverified.")
+    elif parser_config is None:
         print("No confirmed parser mapping configured; capturing sanitized messages only.")
     try:
         while count < max_messages:
@@ -86,18 +94,34 @@ def capture() -> None:
             with RAW_PATH.open("a", encoding="utf-8") as handle:
                 handle.write(json.dumps(record, ensure_ascii=False) + "\n")
 
-            if parser_config is not None:
+            candidate_results = []
+            if protocol_mode == "signalr_oncrash_candidate":
+                # SignalR may concatenate JSON frames using ASCII record separator.
+                for frame in sanitized.split("\\x1e"):
+                    if not frame.strip():
+                        continue
+                    try:
+                        candidate = parse_oncrash_candidate(frame)
+                    except ValueError:
+                        parse_errors += 1
+                        candidate = None
+                    if candidate is not None:
+                        candidate_results.append(candidate)
+            elif parser_config is not None:
                 try:
                     result = parse_final_result(sanitized, **parser_config)
                 except ValueError:
                     parse_errors += 1
                     result = None
                 if result is not None:
-                    round_id = result["round_id"]
-                    if round_id in parsed_by_id and parsed_by_id[round_id]["multiplier"] != result["multiplier"]:
-                        conflicting_ids.add(round_id)
-                    else:
-                        parsed_by_id[round_id] = result
+                    candidate_results.append(result)
+
+            for result in candidate_results:
+                round_id = result["round_id"]
+                if round_id in parsed_by_id and parsed_by_id[round_id]["multiplier"] != result["multiplier"]:
+                    conflicting_ids.add(round_id)
+                else:
+                    parsed_by_id[round_id] = result
             print(f"Captured message {count} ({len(raw_text)} characters; common secret fields redacted)")
     finally:
         ws.close()
@@ -115,7 +139,9 @@ def capture() -> None:
         print(f"Warning: excluded {len(conflicting_ids)} round IDs with conflicting parsed multipliers.")
     if parse_errors:
         print(f"Warning: {parse_errors} messages had malformed configured result fields.")
-    if parser_config is None:
+    if protocol_mode == "signalr_oncrash_candidate":
+        print("Legacy OnCrash parsing is experimental; confirm each candidate against visible completed-round history.")
+    elif parser_config is None:
         print("Configure parser paths only after confirming them against sanitized feed samples.")
     else:
         print("Every parsed row remains verified=false until reconciled with trusted visible game history.")
