@@ -26,6 +26,16 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="crash-feed-inspector")
     subparsers = parser.add_subparsers(dest="command")
     subparsers.add_parser("capture", help="Capture a bounded authorized WebSocket sample")
+    capture_sync = subparsers.add_parser(
+        "capture-sync",
+        help="Capture a bounded sample and sync unverified candidates to private Supabase",
+    )
+    capture_sync.add_argument("--batch-size", type=int, default=200)
+    capture_sync.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Capture and validate candidates, but do not make a Supabase write",
+    )
 
     inspect = subparsers.add_parser(
         "inspect-jsonl",
@@ -82,6 +92,38 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = parser.parse_args(argv)
     if args.command in (None, "capture"):
         capture()
+        return 0
+
+    if args.command == "capture-sync":
+        if not 1 <= args.batch_size <= 500:
+            parser.error("--batch-size must be between 1 and 500.")
+        capture()
+        captured_csv = Path("data/rounds.csv")
+        try:
+            rows = load_rounds_csv(captured_csv)
+        except (OSError, ValueError) as exc:
+            if isinstance(exc, ValueError) and str(exc) == "CSV contains no data rows.":
+                result = {
+                    "mode": "skipped",
+                    "candidate_rows": 0,
+                    "reason": "No schema-matched candidate rows were captured; Supabase was not called.",
+                }
+                print(json.dumps({"capture": "completed", "sync": result}, ensure_ascii=False, indent=2))
+                return 0
+            parser.error(str(exc))
+        if args.dry_run:
+            result = preview_sync(rows)
+        else:
+            try:
+                result = sync_unverified_rounds(rows, batch_size=args.batch_size)
+            except (ValueError, RuntimeError) as exc:
+                parser.error(str(exc))
+        print(json.dumps({
+            "capture": "completed",
+            "candidate_rows": len(rows),
+            "sync": result,
+            "verification_policy": "Captured rounds remain unverified until reconciled with trusted visible history.",
+        }, ensure_ascii=False, indent=2))
         return 0
 
     if args.command == "research-supabase":
