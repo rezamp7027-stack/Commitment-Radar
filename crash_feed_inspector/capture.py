@@ -118,8 +118,16 @@ def capture() -> None:
 
             for result in candidate_results:
                 round_id = result["round_id"]
-                if round_id in parsed_by_id and parsed_by_id[round_id]["multiplier"] != result["multiplier"]:
-                    conflicting_ids.add(round_id)
+                if round_id in parsed_by_id:
+                    previous = parsed_by_id[round_id]
+                    if (
+                        previous["multiplier"] != result["multiplier"]
+                        or previous.get("timestamp_utc") != result.get("timestamp_utc")
+                    ):
+                        conflicting_ids.add(round_id)
+                    else:
+                        # Keep the first identical occurrence to preserve arrival provenance.
+                        parsed_by_id.setdefault(round_id, result)
                 else:
                     parsed_by_id[round_id] = result
             print(f"Captured message {count} ({len(raw_text)} characters; common secret fields redacted)")
