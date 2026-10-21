@@ -17,7 +17,7 @@ def wilson_interval(successes: int, trials: int, z: float = 1.959963984540054) -
         raise ValueError("successes and trials must be integers.")
     if trials < 1 or successes < 0 or successes > trials:
         raise ValueError("Require trials >= 1 and 0 <= successes <= trials.")
-    if not math.isfinite(z) or z <= 0:
+    if isinstance(z, bool) or not isinstance(z, (int, float)) or not math.isfinite(z) or z <= 0:
         raise ValueError("z must be finite and positive.")
     p = successes / trials
     z2 = z * z
@@ -53,40 +53,65 @@ def research_report(
     data = validate_multipliers(values)
     if isinstance(min_history, bool) or not isinstance(min_history, int) or min_history < 1:
         raise ValueError("min_history must be a positive integer.")
-    if not math.isfinite(max_window_rate_gap) or not 0 <= max_window_rate_gap <= 1:
+    if (
+        isinstance(max_window_rate_gap, bool)
+        or not isinstance(max_window_rate_gap, (int, float))
+        or not math.isfinite(max_window_rate_gap)
+        or not 0 <= max_window_rate_gap <= 1
+    ):
         raise ValueError("max_window_rate_gap must be between 0 and 1.")
-    checked_thresholds = tuple(float(t) for t in thresholds)
-    if not checked_thresholds or any(not math.isfinite(t) or t < 1 for t in checked_thresholds):
-        raise ValueError("thresholds must be finite and >= 1.")
+
+    checked_thresholds: list[float] = []
+    for item in thresholds:
+        if isinstance(item, bool) or not isinstance(item, (int, float)):
+            raise ValueError("thresholds must be finite numbers >= 1.")
+        threshold = float(item)
+        if not math.isfinite(threshold) or threshold < 1:
+            raise ValueError("thresholds must be finite numbers >= 1.")
+        checked_thresholds.append(threshold)
+    if not checked_thresholds:
+        raise ValueError("At least one threshold is required.")
+
     checked_windows = tuple(sorted(set(windows)))
-    if not checked_windows or any(isinstance(w, bool) or not isinstance(w, int) or w < 1 for w in checked_windows):
+    if not checked_windows or any(
+        isinstance(window, bool) or not isinstance(window, int) or window < 1
+        for window in checked_windows
+    ):
         raise ValueError("windows must contain positive integers.")
 
     results = {}
     for threshold in checked_thresholds:
         full = _rate(data, threshold)
-        available = {str(w): _rate(data[-w:], threshold) for w in checked_windows if len(data) >= w}
+        available = {
+            str(window): _rate(data[-window:], threshold)
+            for window in checked_windows
+            if len(data) >= window
+        }
         gaps = [abs(item["historical_rate"] - full["historical_rate"]) for item in available.values()]
         widest_gap = max(gaps, default=0.0)
         enough = len(data) >= min_history
-        stable = enough and (not available or widest_gap <= max_window_rate_gap)
+        recent_window_available = bool(available)
+        stable = enough and recent_window_available and widest_gap <= max_window_rate_gap
         low, high = full["wilson_95_ci"]
+        if not enough:
+            status = "no_signal_insufficient_history"
+        elif not recent_window_available:
+            status = "no_signal_insufficient_recent_window"
+        elif not stable:
+            status = "no_signal_unstable_history"
+        else:
+            status = "historical_rate_only_no_next_round_claim" if low != high else "no_signal_degenerate_interval"
         results[str(threshold)] = {
             "full_history": full,
             "recent_windows": available,
             "largest_recent_vs_full_rate_gap": widest_gap,
             "filters": {
                 "minimum_history_passed": enough,
+                "recent_window_available": recent_window_available,
                 "window_stability_passed": stable,
                 "uncertainty_interval_reported": True,
             },
-            "status": (
-                "historical_rate_only_no_next_round_claim"
-                if stable and low != high
-                else "no_signal_insufficient_history"
-                if not enough
-                else "no_signal_unstable_history"
-            ),
+            "status": status,
         }
 
     return {
