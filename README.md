@@ -68,7 +68,8 @@ CSV must contain round_id and multiplier. Optional columns are timestamp_utc, so
     python -m crash_feed_inspector analyze-csv path/to/rounds.csv --threshold 2.0 --min-train 30
     python -m crash_feed_inspector research-csv path/to/rounds.csv
     python -m crash_feed_inspector research-csv path/to/rounds.csv --thresholds 1.5 2 3 5 --windows 30 100 300 --min-history 100 --max-window-rate-gap 0.15
-    python -m crash_feed_inspector dashboard-csv path/to/rounds.csv --output data/dashboard.html --threshold 2.0\n    python -m crash_feed_inspector sync-csv path/to/rounds.csv --dry-run
+    python -m crash_feed_inspector dashboard-csv path/to/rounds.csv --output data/dashboard.html --threshold 2.0
+    python -m crash_feed_inspector sync-csv path/to/rounds.csv --dry-run
 
 Research uses only rows explicitly marked verified=true. It reports historical threshold frequencies, Wilson 95% intervals, and stability comparisons across recent windows. Insufficient or unstable history yields a no-signal status. A stable historical rate is not a forecast of the next round and does not establish a profitable edge. Input must be ordered oldest-to-newest. Trying many thresholds/windows and reporting only the best creates multiple-testing bias; predefine comparisons and preserve a final untouched holdout.
 

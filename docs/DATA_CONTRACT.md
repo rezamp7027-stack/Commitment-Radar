@@ -52,4 +52,6 @@ The offline analysis command only consumes rows explicitly marked verified=true.
 
 ## 6. Supabase boundary
 
-The migration under supabase/migrations defines a proposed persistence table with Row Level Security enabled and no client-facing policies. It is not applied to any live Supabase project. The only currently visible active Supabase project is named Testt, and this repository has not been confirmed as its owner workload. Select the intended project and review access requirements before applying the migration.
+The Supabase project named Crash contains `public.crash_rounds` and `public.crash_predictions`. RLS is enabled and no `anon`/`authenticated` table grants or policies exist. The `sync-csv` path runs only in a trusted local/server process using `SUPABASE_SERVICE_ROLE_KEY`; that credential must never be exposed to browsers or committed. The command skips rows marked verified=true, writes every candidate as `verified=false` with `verification_status=pending_manual_confirmation`, and uses `resolution=ignore-duplicates` so existing rows are not overwritten. This is persistence, not source verification or proof that the feed parser is correct.
+
+The live database retains migration-history entries from the previous Commitment-Radar application. See `supabase/README.md`; do not run `supabase db push` until local and remote migration histories have been reconciled.

@@ -7,6 +7,7 @@ this module or its credentials into a browser app or static dashboard.
 from __future__ import annotations
 
 import json
+import math
 import os
 from typing import Any, Callable, Iterable
 from urllib.error import HTTPError, URLError
@@ -95,7 +96,7 @@ def sync_unverified_rounds(
         multiplier = row.get("multiplier")
         if not source or not round_id:
             raise ValueError("Every candidate must have a non-empty source and round_id.")
-        if isinstance(multiplier, bool) or not isinstance(multiplier, (int, float)) or multiplier < 1:
+        if isinstance(multiplier, bool) or not isinstance(multiplier, (int, float)) or not math.isfinite(multiplier) or multiplier < 1:
             raise ValueError(f"Candidate {round_id!r} has an invalid multiplier.")
         payload_row = {
             "source": source,
