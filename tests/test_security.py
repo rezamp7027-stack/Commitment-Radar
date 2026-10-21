@@ -21,6 +21,16 @@ class SecurityTests(unittest.TestCase):
         self.assertEqual(result["jwt"], "[REDACTED]")
         self.assertEqual(result["signed_url"], "[REDACTED]")
 
+
+    def test_record_separated_signalr_json_frames_are_redacted_individually(self):
+        first = json.dumps({"type": 1, "target": "OnCrash", "arguments": [{"l": "r1", "f": "2.0"}]})
+        private = json.dumps({"type": 1, "target": "Auth", "access_token": "private-frame-token"})
+        result = sanitize_message(first + "\\x1e" + private + "\\x1e")
+        self.assertNotIn("private-frame-token", result)
+        frames = [part for part in result.split("\\x1e") if part]
+        self.assertEqual(len(frames), 2)
+        self.assertEqual(json.loads(frames[1])["access_token"], "[REDACTED]")
+
     def test_text_token_is_redacted(self):
         result = sanitize_message("token=private-value&count=2")
         self.assertNotIn("private-value", result)
