@@ -92,9 +92,11 @@ class CaptureTests(unittest.TestCase):
         a = json.dumps({"type": 1, "target": "OnCrash", "arguments": [{"l": "same", "f": "2.0", "ts": 1760000000000}]})
         b = json.dumps({"type": 1, "target": "OnCrash", "arguments": [{"l": "same", "f": "3.0", "ts": 1760000001000}]})
         base, fake_socket = self.run_capture([a, b], {"CRASH_PROTOCOL": "signalr_oncrash_candidate"})
-        rows = load_rounds_csv(base / "rounds.csv")
+        with (base / "rounds.csv").open(encoding="utf-8", newline="") as handle:
+            rows = list(csv.DictReader(handle))
         self.assertTrue(fake_socket.closed)
         self.assertEqual(rows, [])
+        self.assertEqual((base / "rounds.csv").read_text(encoding="utf-8").strip(), ",".join(capture_module.ROUND_COLUMNS))
 
 
 if __name__ == "__main__":
