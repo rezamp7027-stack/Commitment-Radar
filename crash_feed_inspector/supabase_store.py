@@ -142,7 +142,7 @@ def sync_unverified_rounds(
                 body = response.read()
         except HTTPError as exc:
             # Do not include request headers or the secret key in error output.
-            detail = exc.read().decode("utf-8", errors="replace")[:400]
+            detail = exc.read().decode("utf-8", errors="replace").replace(key, "[REDACTED]")[:400]
             raise RuntimeError(f"Supabase insert failed with HTTP {exc.code}: {detail}") from None
         except (URLError, TimeoutError, OSError) as exc:
             raise RuntimeError(f"Supabase insert failed due to a network/transport error: {type(exc).__name__}.") from None
