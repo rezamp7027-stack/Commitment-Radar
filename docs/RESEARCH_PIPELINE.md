@@ -34,6 +34,13 @@ Input CSV must be ordered oldest-to-newest. Defaults are transparent and configu
 - **Raw WebSocket frames:** do not upload by default. They can contain tokens, session IDs, account metadata, or proprietary information. Keep only necessary sanitized fields and an event hash when legally and technically appropriate.
 - **Model memory/state:** store versioned, inspectable features and training-window metadata in the database, not undocumented internal model memory. Each estimate should record data count, model version, time, threshold, probability, uncertainty interval, and later outcome if available.
 
+## Supabase-backed research and evaluation
+
+- `research-supabase --source SOURCE` reads only verified rows for one source, requires real timestamps, computes the same transparent frequency/stability report as the CSV workflow, and appends one ledger row per threshold.
+- Ledger decisions are limited to `research_only` or `no_signal`. The current baseline never emits `candidate_signal` because no predictive edge has been demonstrated.
+- `evaluate-supabase --source SOURCE` scores research-only estimates against the first later verified round. Estimates created after an outcome are not retroactively matched to that outcome.
+- This is retrospective research and baseline scoring, not a wagering system or a claim of profitable prediction.
+
 ## Supabase migration status
 
 supabase/migrations/202610210001_crash_research_ledger.sql is a review-only draft. It enables row-level security and intentionally defines no public client policies. Do not apply it until the correct Supabase project, authorization model, retention policy, and server-side ingestion path are confirmed. No database deployment is implied by committing this SQL file.

@@ -109,5 +109,126 @@ class SupabaseStoreTests(unittest.TestCase):
             sync_unverified_rounds([], batch_size=501, supabase_url="https://project.supabase.co", service_role_key="x")
 
 
+class SupabaseReadAndLedgerTests(unittest.TestCase):
+    def response(self, value):
+        return FakeResponse(json.dumps(value).encode("utf-8"))
+
+    def test_fetch_verified_rounds_filters_source_and_requires_timestamps(self):
+        seen = []
+
+        def opener(request, timeout):
+            seen.append(request)
+            return self.response([{
+                "source": "feed/a",
+                "round_id": "r1",
+                "occurred_at": "2026-01-01T00:00:00Z",
+                "multiplier": 1.8,
+                "schema_version": "v1",
+            }])
+
+        from crash_feed_inspector.supabase_store import fetch_verified_rounds
+        rows = fetch_verified_rounds(
+            "feed/a",
+            supabase_url="https://project.supabase.co",
+            service_role_key="secret",
+            opener=opener,
+        )
+        self.assertEqual(rows[0]["multiplier"], 1.8)
+        self.assertIn("verified", seen[0].full_url)
+        self.assertIn("feed%2Fa", seen[0].full_url)
+
+    def test_fetch_verified_rounds_fails_when_timestamp_missing(self):
+        def opener(request, timeout):
+            return self.response([{
+                "source": "feed",
+                "round_id": "r1",
+                "occurred_at": None,
+                "multiplier": 2.0,
+                "schema_version": "v1",
+            }])
+
+        from crash_feed_inspector.supabase_store import fetch_verified_rounds
+        with self.assertRaisesRegex(ValueError, "no timestamp"):
+            fetch_verified_rounds(
+                "feed",
+                supabase_url="https://project.supabase.co",
+                service_role_key="secret",
+                opener=opener,
+            )
+
+    def test_prediction_ledger_never_emits_candidate_signal(self):
+        captured = []
+
+        def opener(request, timeout):
+            captured.append(json.loads(request.data.decode("utf-8")))
+            return self.response([{"id": 1}, {"id": 2}])
+
+        from crash_feed_inspector.supabase_store import store_research_predictions
+        report = {
+            "threshold_results": {
+                "2.0": {
+                    "full_history": {"historical_rate": 0.4, "wilson_95_ci": [0.2, 0.6], "rounds": 50},
+                    "recent_windows": {},
+                    "largest_recent_vs_full_rate_gap": 0.01,
+                    "status": "historical_rate_only_no_next_round_claim",
+                },
+                "5.0": {
+                    "full_history": {"historical_rate": 0.1, "wilson_95_ci": [0.03, 0.2], "rounds": 50},
+                    "recent_windows": {},
+                    "largest_recent_vs_full_rate_gap": 0.3,
+                    "status": "no_signal_unstable_history",
+                },
+            }
+        }
+        result = store_research_predictions(
+            "feed",
+            report,
+            supabase_url="https://project.supabase.co",
+            service_role_key="secret",
+            opener=opener,
+        )
+        self.assertEqual(result["records_inserted"], 2)
+        self.assertEqual([row["decision"] for row in captured[0]], ["research_only", "no_signal"])
+        self.assertTrue(all(row["decision"] != "candidate_signal" for row in captured[0]))
+
+    def test_evaluation_uses_first_later_verified_round(self):
+        calls = []
+
+        def opener(request, timeout):
+            calls.append(request)
+            if request.get_method() == "GET" and "crash_rounds" in request.full_url:
+                return self.response([{
+                    "source": "feed",
+                    "round_id": "r2",
+                    "occurred_at": "2026-01-02T00:00:00Z",
+                    "multiplier": 2.5,
+                    "schema_version": "v1",
+                }])
+            if request.get_method() == "GET" and "crash_predictions" in request.full_url:
+                return self.response([{
+                    "id": 7,
+                    "source": "feed",
+                    "created_at": "2026-01-01T00:00:00Z",
+                    "target_threshold": 2.0,
+                    "decision": "research_only",
+                }])
+            if request.get_method() == "PATCH":
+                self.assertEqual(json.loads(request.data.decode("utf-8"))["evaluated_round_id"], "r2")
+                return self.response([{"id": 7}])
+            raise AssertionError(f"Unexpected request: {request.get_method()} {request.full_url}")
+
+        from crash_feed_inspector.supabase_store import evaluate_pending_predictions
+        result = evaluate_pending_predictions(
+            "feed",
+            supabase_url="https://project.supabase.co",
+            service_role_key="secret",
+            opener=opener,
+        )
+        self.assertEqual(result["evaluated"], 1)
+        self.assertEqual(result["hits"], 1)
+        self.assertEqual(result["misses"], 0)
+        self.assertEqual(len(calls), 3)
+
+
 if __name__ == "__main__":
     unittest.main()

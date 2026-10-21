@@ -13,7 +13,13 @@ from .dataset import load_rounds_csv, quality_report, verified_multipliers
 from .inspect import inspect_jsonl
 from .report import generate_dashboard
 from .research import research_report
-from .supabase_store import preview_sync, sync_unverified_rounds
+from .supabase_store import (
+    evaluate_pending_predictions,
+    fetch_verified_rounds,
+    preview_sync,
+    store_research_predictions,
+    sync_unverified_rounds,
+)
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -58,9 +64,53 @@ def main(argv: Sequence[str] | None = None) -> int:
     sync.add_argument("--batch-size", type=int, default=200)
     sync.add_argument("--dry-run", action="store_true", help="Validate and preview without network access")
 
+    db_research = subparsers.add_parser(
+        "research-supabase", help="Research verified Supabase history and append baseline estimates to the ledger"
+    )
+    db_research.add_argument("--source", required=True, help="Exact source label stored in crash_rounds")
+    db_research.add_argument("--thresholds", type=float, nargs="+", default=[1.5, 2.0, 3.0, 5.0])
+    db_research.add_argument("--windows", type=int, nargs="+", default=[30, 100, 300])
+    db_research.add_argument("--min-history", type=int, default=100)
+    db_research.add_argument("--max-window-rate-gap", type=float, default=0.15)
+
+    db_evaluate = subparsers.add_parser(
+        "evaluate-supabase", help="Score pending research-only estimates against the first later verified round"
+    )
+    db_evaluate.add_argument("--source", required=True, help="Exact source label stored in crash_rounds")
+    db_evaluate.add_argument("--limit", type=int, default=1000)
+
     args = parser.parse_args(argv)
     if args.command in (None, "capture"):
         capture()
+        return 0
+
+    if args.command == "research-supabase":
+        try:
+            db_rows = fetch_verified_rounds(args.source)
+            db_report = research_report(
+                [row["multiplier"] for row in db_rows],
+                thresholds=tuple(args.thresholds),
+                windows=tuple(args.windows),
+                min_history=args.min_history,
+                max_window_rate_gap=args.max_window_rate_gap,
+            )
+            ledger = store_research_predictions(args.source, db_report)
+        except (ValueError, RuntimeError) as exc:
+            parser.error(str(exc))
+        print(json.dumps({
+            "source": args.source,
+            "verified_rows": len(db_rows),
+            "research": db_report,
+            "ledger": ledger,
+        }, ensure_ascii=False, indent=2))
+        return 0
+
+    if args.command == "evaluate-supabase":
+        try:
+            result = evaluate_pending_predictions(args.source, limit=args.limit)
+        except (ValueError, RuntimeError) as exc:
+            parser.error(str(exc))
+        print(json.dumps({"evaluation": result}, ensure_ascii=False, indent=2))
         return 0
 
     if args.command == "inspect-jsonl":

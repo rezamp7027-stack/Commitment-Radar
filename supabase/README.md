@@ -13,7 +13,7 @@
 
 The Python command `sync-csv` uses the PostgREST endpoint from a trusted local/server process. Set `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` in the local ignored `.env` file. Never place the service-role key in frontend code, GitHub secrets for this workflow, committed files, screenshots, or logs.
 
-Run `python -m crash_feed_inspector sync-csv data/rounds.csv --dry-run` first. Then omit `--dry-run` to send rows. Only rows with `verified=false` are imported; every imported row is explicitly stored as `verified=false` and `verification_status=pending_manual_confirmation`. Verified CSV rows are skipped. Existing `(source, round_id)` rows are ignored rather than overwritten. Raw WebSocket frames and credentials are never uploaded.
+Run `python -m crash_feed_inspector sync-csv data/rounds.csv --dry-run` first. Then omit `--dry-run` to send rows. After enough rows have been independently verified and have valid timestamps, run `python -m crash_feed_inspector research-supabase --source your-source-label` to append baseline estimates, and `python -m crash_feed_inspector evaluate-supabase --source your-source-label` to evaluate pending research-only estimates against later verified rounds. Only rows with `verified=false` are imported; every imported row is explicitly stored as `verified=false` and `verification_status=pending_manual_confirmation`. Verified CSV rows are skipped. Existing `(source, round_id)` rows are ignored rather than overwritten. Raw WebSocket frames and credentials are never uploaded.
 
 ## Migration safety warning
 
