@@ -33,7 +33,7 @@ Requires Python 3.11+.
     python -m pip install -r requirements.txt
     cp .env.example .env
 
-Set CRASH_WS_URL in .env to a WebSocket endpoint you are authorized to access. It must begin with ws:// or wss://. Do not put credentials, cookies, or tokens in the URL or commit them to GitHub.
+Set CRASH_WS_URL in the local ignored .env to a WebSocket endpoint you are authorized to access. It must begin with ws:// or wss://. Some official/session-authorized feeds may require a session URL or token; if so, keep it only in the local ignored .env, never commit it, paste it into chat, or share it in logs. Session URLs/tokens may expire. The capture tool now suppresses endpoint details in connection errors to avoid exposing query-string credentials.
 
 ## Capture and inspect a bounded sample
 
