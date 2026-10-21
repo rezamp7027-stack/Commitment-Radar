@@ -99,6 +99,9 @@ The Supabase project named Crash already contains `public.crash_rounds` and `pub
 
 ## Project documents
 
+- [Verified status and operations runbook](docs/STATUS_AND_RUNBOOK.md)
+
+
 - docs/PROJECT_SPEC.md — scope and research requirements
 - docs/DATA_CONTRACT.md — parsing, normalization, and verification rules
 - docs/ARCHITECTURE.md — module boundaries and engineering decisions
