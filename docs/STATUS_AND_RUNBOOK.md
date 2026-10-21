@@ -57,6 +57,8 @@ Conclusion: none of these checks yielded verified live multipliers. Do not popul
 
 - Help: `python -m crash_feed_inspector --help`
 - Bounded read-only capture: `python -m crash_feed_inspector capture`
+- Capture and preview Supabase import: `python -m crash_feed_inspector capture-sync --dry-run`
+- Capture and import unverified candidates to Supabase: `python -m crash_feed_inspector capture-sync` (requires the private local `.env` credentials)
 - Inspect capture: `python -m crash_feed_inspector inspect-jsonl data/messages.jsonl`
 - Validate import: `python -m crash_feed_inspector sync-csv data/rounds.csv --dry-run`
 - Import unverified candidates: `python -m crash_feed_inspector sync-csv data/rounds.csv`
@@ -67,7 +69,9 @@ Conclusion: none of these checks yielded verified live multipliers. Do not popul
 
 ## Data integrity rules
 
-- CSV sync inserts only unverified candidate rows; it never verifies outcomes and ignores duplicate `(source, round_id)` conflicts rather than overwriting them.
+- CSV sync and `capture-sync` insert only unverified candidate rows; they never verify outcomes and ignore duplicate `(source, round_id)` conflicts rather than overwriting them.
+- The legacy SignalR adapter rejects invalid message types, identifiers, multipliers, and likely epoch-seconds misinterpretations; conflicting multiplier or timestamp values for the same round ID are excluded from the candidate CSV.
+- Capture-to-Supabase sync runs only from the local/server CLI. The service-role key is not placed in GitHub Actions or frontend code.
 - Reconcile candidates against trusted visible completed-round history before updating verification status.
 - Research uses only verified rows with valid timestamps. Empty verified data or unavailable configured recent windows must stop the signal path.
 - Historical frequency and confidence intervals are descriptive, not proof that the next round is predictable or that a betting strategy is profitable.
