@@ -1,46 +1,39 @@
-# Roadmap
+# Roadmap — Current Verified Status
 
-## Stage 1 — Foundation and offline safety
-- [x] Bounded read-only WebSocket capture
-- [x] Sanitize common credential-shaped fields before local logging
-- [x] Explicit schema-mapped event parser that never self-certifies outcomes
-- [x] Strict CSV loading, duplicate-ID rejection, timezone normalization, and quality report
-- [x] CLI commands for capture, CSV validation, and verified-only analysis
-- [x] Descriptive statistics and chronological walk-forward baseline
-- [x] Unit tests and GitHub Actions workflow
-- [ ] Confirm the latest GitHub Actions run is green
+## Stage 1: Core pipeline
+- [x] Bounded read-only WebSocket capture with timeout/message caps
+- [x] Best-effort secret redaction
+- [x] Explicit event/schema mapping; parsed outcomes remain unverified
+- [x] Strict CSV validation, duplicate rejection, timezone normalization, quality report
+- [x] Verified-only descriptive statistics and chronological baseline
+- [x] Unit tests and GitHub Actions for Python 3.11 and 3.12
+- [x] Current main CI passed for commit 6f243e72d8573e6e12b7f49b65779227bc315433
 
-## Stage 2 — Establish data truth
-- [ ] Capture a small sample from an authorized endpoint
-- [ ] Review and sanitize the sample before sharing
-- [ ] Identify actual event types and authoritative completed-round field
-- [ ] Compare parsed outcomes with visible game history
-- [ ] Add sanitized fixtures derived from the real protocol, with secrets removed
-- [ ] Record source, schema version, and validation procedure
+## Stage 2: Private persistence
+- [x] Deploy crash_rounds and crash_predictions in Supabase project Crash
+- [x] RLS enabled; anon/authenticated have no table grants or policies
+- [x] Unique source/round ID constraint, verification-state consistency, multiplier constraints
+- [x] SHA-256 format and all-or-none prediction evaluation constraints
+- [x] sync-csv inserts unverified candidates only and ignores duplicates without overwriting
+- [ ] Configure local trusted credentials and import real candidate data
+- [ ] Reconcile sample rows against trusted visible completed-round history
 
-## Stage 3 — Historical dataset
-- [x] Define normalized CSV contract: round ID, timestamp, multiplier, source, verification state, schema version
-- [x] Reject duplicate IDs and invalid or non-finite multipliers
-- [x] Report missing timestamps and out-of-order timestamps
-- [ ] Add real-feed reconciliation and conflict-resolution workflow
-- [ ] Establish retention and provenance rules for historical datasets
+## Stage 3: Research ledger
+- [x] research-supabase reads verified timestamped rows only
+- [x] Research ledger writes historical-frequency estimates and Wilson intervals
+- [x] evaluate-supabase scores research-only estimates against the first later verified round
+- [x] Current baseline never emits candidate_signal
+- [ ] Add real-feed fixtures after endpoint schema is observed
+- [ ] Benchmark future candidate models against baseline on identical chronological splits
+- [ ] Preserve untouched final holdout and report calibration
 
-## Stage 4 — Research evaluation
-- [x] Historical-frequency baseline with chronological walk-forward evaluation
-- [x] Brier score and majority-direction accuracy for the baseline
-- [ ] Compare candidate models against the baseline on identical time splits
-- [ ] Preserve an untouched final holdout
-- [ ] Report calibration, uncertainty, sample sizes, and multiple-testing risk
-- [ ] Record predictions before outcomes arrive
-- [ ] Report no-signal when no robust advantage exists
+## Stage 4: Operator experience and release
+- [x] Local static HTML snapshot from verified CSV
+- [x] Operational/data-quality metric definitions
+- [x] Status and operations runbook
+- [ ] Confirm authorized endpoint reachability and final-result schema
+- [ ] Build a live dashboard only after a safe server/API boundary is designed
+- [ ] Confirm post-commit Pages workflow completes
 
-## Stage 5 — Persistence and operator interface
-- [x] Generate a self-contained local HTML snapshot from verified CSV data
-- [ ] Select the correct Supabase project for this repository before applying any database changes
-- [ ] Add a reviewed SQL migration with least-privilege access and RLS
-- [ ] Build a live feed-health and parser-diagnostics interface
-- [x] Add historical distribution and data-quality views in the local HTML report
-- [ ] Add model-evaluation views after a real verified dataset exists
-- [ ] Deploy only after endpoint mapping, tests, and access policy are reviewed
-
-No real endpoint or result schema has been verified yet. A successful socket connection does not prove correct parsing; a backtest does not guarantee future performance. No betting or bankroll automation is in scope.
+## Blocking facts
+Supabase tables currently contain zero rows. Live WebSocket reachability, endpoint authorization, authoritative completed-result event mapping, and predictive edge remain unverified. Passing synthetic tests proves local logic only; it does not prove a real feed works. No betting or bankroll automation is in scope.
